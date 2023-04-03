@@ -16,6 +16,8 @@ export class Web3Service implements OnModuleInit {
     this.wallet = new Wallet(environment.wallet.key, environment.wallet.rpcUrl);
   }
 
+  /** Genereic functions  **/
+
   async onModuleInit() {
     this.onInitCurrentBlockHeight = await this.getCurrentBlockHeight();
     const lastKnownDbBlockHeight = await this.getLastKnownBlockHeight();
@@ -77,7 +79,7 @@ export class Web3Service implements OnModuleInit {
           await this.warmupContractFactoryTopics(
             _blockHeight + 1,
             currentBlockHeight,
-          ); 
+          );
         } else {
           this.logger.warn(
             `SystemStatus.Ready | Blocks up to date | to block: #${_toBlockHeight}`,
@@ -144,45 +146,40 @@ export class Web3Service implements OnModuleInit {
     return this.wallet.web3.eth.abi.decodeLog(any, log.data, log.topics);
   }
 
+  /** Switch Status Change **/
+
   private async _onStatusChange(event: any, _blockHeight: number) {
-    //...
+    //... do something with the event
     switch (event.newStatus) {
-      case TradeStatus.Pending:
-        const newPendingStatusIs = await this.db.isStatusHigherThanKnown(event);
-        if (newPendingStatusIs.higher) {
+      case TradeStatus.ForSale:
+        const newForSaleStatusIs = await this.db.isStatusHigherThanKnown(event);
+        if (newForSaleStatusIs.higher) {
           await this.__onContractCreation(event, _blockHeight);
         } else {
           this.logger.warn(
-            `TradeStatus.Pending | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newPendingStatusIs.newStatus}/${newPendingStatusIs.currentStatus} | block: #${_blockHeight}`,
+            `TradeStatus.ForSale | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newForSaleStatusIs.newStatus}/${newForSaleStatusIs.currentStatus} | block: #${_blockHeight}`,
           );
         }
         break;
+
       case TradeStatus.SellerCancelled:
-        const newSellerCancelledStatusIs = await this.db.isStatusHigherThanKnown(
-          event,
-        );
-        if(newSellerCancelledStatusIs.higher){
-          await this.__onSellerCancelledDatabaseAction(event, _blockHeight);
-        }
-        
         /**
-         * If status is higher than status in db: 
-         change status to 1 in db
-         */
-        break;
-      case TradeStatus.Committed:
-        const newCommittedStatusIs = await this.db.isStatusHigherThanKnown(
-          event,
-        );
-        if (newCommittedStatusIs.higher) {
-          await this.__onBuyerCommittedDatabaseAction(event, _blockHeight);
-          //Call Item Tracker (prep args in a sep function if needed) here!
+       * If status is higher than status in db: 
+       change status to 1 in db
+        */
+        const newSellerCancelledStatusIs =
+          await this.db.isStatusHigherThanKnown(event);
+
+        if (newSellerCancelledStatusIs.higher) {
+          await this.__onSellerCancelledDatabaseAction(event, _blockHeight);
         } else {
           this.logger.warn(
-            `TradeStatus.Committed | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newCommittedStatusIs.newStatus}/${newCommittedStatusIs.currentStatus} | block: #${_blockHeight}`,
+            `TradeStatus.SellerCancelled | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newSellerCancelledStatusIs.newStatus}/${newSellerCancelledStatusIs.currentStatus} | block: #${_blockHeight}`,
           );
         }
+        break;
 
+      case TradeStatus.BuyerCommitted:
         /**
          * If status is higher than status in db:
          add buyerAddress
@@ -193,13 +190,44 @@ export class Web3Service implements OnModuleInit {
               <contractAddress>,
               environment.tradeContract.abi,
             ); <- maybe do from itemtracker the wallet tingy?
-            and logs it.
+            and logs it or do it on accepted?.
          */
+        const newBuyerCommittedStatusIs = await this.db.isStatusHigherThanKnown(
+          event,
+        );
+        if (newBuyerCommittedStatusIs.higher) {
+          await this.__onBuyerCommittedDatabaseAction(event, _blockHeight);
+          //Call Item Tracker (prep args in a sep function if needed) here!
+        } else {
+          this.logger.warn(
+            `TradeStatus.Committed | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newBuyerCommittedStatusIs.newStatus}/${newBuyerCommittedStatusIs.currentStatus} | block: #${_blockHeight}`,
+          );
+        }
         break;
-      case TradeStatus.Accepted:
+
+      case TradeStatus.BuyerCancelled:
         /**
          * If status is higher than status in db:
-         change status to 3 in db
+         * change status to 3 in db
+         * then:
+         * !close item specific tracker instance!? (if it exists)
+         * */
+        const newBuyerCancelledStatusIs = await this.db.isStatusHigherThanKnown(
+          event,
+        );
+        if (newBuyerCancelledStatusIs.higher) {
+          await this.__onBuyerCancelledDatabaseAction(event, _blockHeight);
+        } else {
+          this.logger.warn(
+            `TradeStatus.BuyerCancelled | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newBuyerCancelledStatusIs.newStatus}/${newBuyerCancelledStatusIs.currentStatus} | block: #${_blockHeight}`,
+          );
+        }
+        break;
+
+      case TradeStatus.SellerCommitted:
+        /**
+         * If status is higher than status in db:
+         change status to 4 in db
             then:
           check if item-tracker not already has a session for the trade?
             if not, item-tracker run with emphasizes seller already sent item 
@@ -215,45 +243,142 @@ export class Web3Service implements OnModuleInit {
                 or
                 (item is not in seller inv, (item is buyer now in buyer inv?))
          */
+        const newSellerCommittedStatusIs =
+          await this.db.isStatusHigherThanKnown(event);
+
+        if (newSellerCommittedStatusIs.higher) {
+          await this.__onSellerCommittedDatabaseAction(event, _blockHeight);
+        } else {
+          this.logger.warn(
+            `TradeStatus.SellerCommitted | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newSellerCommittedStatusIs.newStatus}/${newSellerCommittedStatusIs.currentStatus} | block: #${_blockHeight}`,
+          );
+        }
+
         break;
+
+      case TradeStatus.SellerCancelledAfterBuyerCommitted:
+        /**
+         * If status is higher than status in db:
+         * change status to 5 in db
+         * then:
+         * !close item specific tracker instance!? (if it exists)
+         * */
+        const newSellerCancelledAfterBuyerCommittedStatusIs =
+          await this.db.isStatusHigherThanKnown(event);
+
+        if (newSellerCancelledAfterBuyerCommittedStatusIs.higher) {
+          await this.__onSellerCancelledAfterBuyerCommittedDatabaseAction(
+            event,
+            _blockHeight,
+          );
+        } else {
+          this.logger.warn(
+            `TradeStatus.SellerCancelledAfterBuyerCommitted | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newSellerCancelledAfterBuyerCommittedStatusIs.newStatus}/${newSellerCancelledAfterBuyerCommittedStatusIs.currentStatus} | block: #${_blockHeight}`,
+          );
+        }
+
+        break;
+
       case TradeStatus.Completed:
         /**
          * If status is higher than status in db:
-         change status to 4 in db
+         change status to 6 in db
               then:
                 !close item specific tracker instance!
          */
+        const newCompletedStatusIs = await this.db.isStatusHigherThanKnown(
+          event,
+        );
+        if (newCompletedStatusIs.higher) {
+          await this.__onCompletedDatabaseAction(event, _blockHeight);
+        } else {
+          this.logger.warn(
+            `TradeStatus.Completed | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newCompletedStatusIs.newStatus}/${newCompletedStatusIs.currentStatus} | block: #${_blockHeight}`,
+          );
+        }
+
         break;
+
       case TradeStatus.Disputed:
         /**
          * If status is higher than status in db:
-         change status to 5 in db
-            then:
-              !close item specific tracker instance!
-              update isDisputed: true & disputeReason: data.
-         */
+         * change status to 7 in db
+         * then:
+         * !close item specific tracker instance!? (if it exists)
+         * */
+        const newDisputedStatusIs = await this.db.isStatusHigherThanKnown(
+          event,
+        );
+        if (newDisputedStatusIs.higher) {
+          await this.__onDisputedDatabaseAction(event, _blockHeight);
+        } else {
+          this.logger.warn(
+            `TradeStatus.Disputed | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newDisputedStatusIs.newStatus}/${newDisputedStatusIs.currentStatus} | block: #${_blockHeight}`,
+          );
+        }
+
         break;
+
       case TradeStatus.Resolved:
         /**
          * If status is higher than status in db:
-          change status to 6 in db
-            then:
-              update isDisputed: false & disputeReason: data.
-         */
+         * change status to 8 in db
+         * then:
+         * !close item specific tracker instance!? (if it exists)
+         * */
+        const newResolvedStatusIs = await this.db.isStatusHigherThanKnown(
+          event,
+        );
+
+        if (newResolvedStatusIs.higher) {
+          await this.__onResolvedDatabaseAction(event, _blockHeight);
+        } else {
+          this.logger.warn(
+            `TradeStatus.Resolved | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newResolvedStatusIs.newStatus}/${newResolvedStatusIs.currentStatus} | block: #${_blockHeight}`,
+          );
+        }
+
         break;
+
       case TradeStatus.Clawbacked:
         /**
          * If status is higher than status in db:
-          change status to 7 in db
-            then:
-              update isDisputed: false & disputeReason: data.
-         */
+         * change status to 9 in db
+         * then:
+         * !close item specific tracker instance!? (if it exists)
+         * */
+        const newClawbackedStatusIs = await this.db.isStatusHigherThanKnown(
+          event,
+        );
+
+        if (newClawbackedStatusIs.higher) {
+          await this.__onClawbackedDatabaseAction(event, _blockHeight);
+        } else {
+          this.logger.warn(
+            `TradeStatus.Clawbacked | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newClawbackedStatusIs.newStatus}/${newClawbackedStatusIs.currentStatus} | block: #${_blockHeight}`,
+          );
+        }
+
         break;
+
       default:
         console.error('status is unknown!', event.newStatus);
         break;
     }
   }
+
+  /** onValid status changes
+   * 0 - ForSale :: __onContractCreation()
+   * 1 - SellerCancelled :: __onSellerCancelledDatabaseAction()
+   * 2 - BuyerCommitted :: __onBuyerCommittedDatabaseAction()
+   * 3 - BuyerCancelled :: __onBuyerCancelledDatabaseAction()
+   * 4 - SellerCommitted :: __onSellerCommittedDatabaseAction()
+   * 5 - SellerCancelledAfterBuyerCommitted :: __onSellerCancelledAfterBuyerCommittedDatabaseAction()
+   * 6 - Completed :: __onCompletedDatabaseAction()
+   * 7 - Disputed :: __onDisputedDatabaseAction()
+   * 8 - Resolved :: __onResolvedDatabaseAction()
+   * 9 - Clawbacked :: __onClawbackedDatabaseAction()
+   */
 
   private async __onContractCreation(event: any, _blockHeight: number) {
     const dataArray = event.data.split('||');
@@ -273,7 +398,7 @@ export class Web3Service implements OnModuleInit {
         {
           id: null,
           contract: event.contractAddress,
-          status: TradeStatus.Pending,
+          status: TradeStatus.ForSale,
           blockHeight: _blockHeight,
         },
       ],
@@ -292,13 +417,34 @@ export class Web3Service implements OnModuleInit {
     }
   }
 
-  private async __onSellerCancelledDatabaseAction(event: any, _blockHeight: number) {
-    //...
-    const dataArray = event.data.split('||');
+  private async __onSellerCancelledDatabaseAction(
+    event: any,
+    _blockHeight: number,
+  ) {
+    //... const dataArray = event.data.split('||');
     console.log('__onSellerCancelled', event);
+
+    const result = await this.db.updateStatus(
+      event.contractAddress,
+      event.newStatus,
+      _blockHeight,
+    );
+
+    if (result.saved) {
+      this.logger.log(
+        `TradeStatus.SellerCancelled | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    } else {
+      this.logger.warn(
+        `TradeStatus.SellerCancelled | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    }
   }
 
-  private async __onBuyerCommittedDatabaseAction(event: any, _blockHeight: number) {
+  private async __onBuyerCommittedDatabaseAction(
+    event: any,
+    _blockHeight: number,
+  ) {
     const dataArray = event.data.split('||');
     // console.log('dataArray', dataArray);
     const _buyerTradeUrl = dataArray[1];
@@ -319,24 +465,173 @@ export class Web3Service implements OnModuleInit {
         `TradeStatus.Committed | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
       );
       // Simulate Item has been sent after 1 min (for testing) by calling contract to release funds to seller .
-      console.log('releaseFundsToSeller in 1 minute from:', await this.wallet.web3signer.eth.getAccounts());      
-      setTimeout(async () => {
-        const _contract = await this.wallet.connectContract(
-          event.contractAddress,
-          environment.tradeContract.abi,
-        );
-        const acc = await this.wallet.web3signer.eth.getAccounts();
-        const _result = await _contract.methods.keeperNodeConfirmsTrade(true).send({
-          from: acc[0],
-        });
-        console.log('releaseFundsToSeller complete', _result);
-      }, 60000);
+      // console.log('releaseFundsToSeller in 1 minute from:', await this.wallet.web3signer.eth.getAccounts());
+      // setTimeout(async () => {
+      //   const _contract = await this.wallet.connectContract(
+      //     event.contractAddress,
+      //     environment.tradeContract.abi,
+      //   );
+      //   const acc = await this.wallet.web3signer.eth.getAccounts();
+      //   const _result = await _contract.methods.keeperNodeConfirmsTrade(true).send({
+      //     from: acc[0],
+      //   });
+      //   console.log('releaseFundsToSeller complete', _result);
+      // }, 60000);
     } else {
       this.logger.warn(
         `TradeStatus.Committed | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
       );
-    }   
+    }
   }
+
+  private async __onBuyerCancelledDatabaseAction(
+    event: any,
+    _blockHeight: number,
+  ) {
+    const result = await this.db.updateStatus(
+      event.contractAddress,
+      event.newStatus,
+      _blockHeight,
+    );
+
+    if (result.saved) {
+      this.logger.log(
+        `TradeStatus.BuyerCancelled | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    } else {
+      this.logger.warn(
+        `TradeStatus.BuyerCancelled | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    }
+  }
+
+  private async __onSellerCommittedDatabaseAction(
+    event: any,
+    _blockHeight: number,
+  ) {
+    const result = await this.db.updateStatus(
+      event.contractAddress,
+      event.newStatus,
+      _blockHeight,
+    );
+
+    if (result.saved) {
+      this.logger.log(
+        `TradeStatus.SellerConfirmed | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    } else {
+      this.logger.warn(
+        `TradeStatus.SellerConfirmed | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    }
+  }
+
+  private async __onSellerCancelledAfterBuyerCommittedDatabaseAction(
+    event: any,
+    _blockHeight: number,
+  ) {
+    const result = await this.db.updateStatus(
+      event.contractAddress,
+      event.newStatus,
+      _blockHeight,
+    );
+
+    if (result.saved) {
+      this.logger.log(
+        `TradeStatus.SellerCancelledAfterBuyerCommitted | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    } else {
+      this.logger.warn(
+        `TradeStatus.SellerCancelledAfterBuyerCommitted | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    }
+  }
+
+  private async __onCompletedDatabaseAction(
+    event: any,
+    _blockHeight: number,
+  ) {
+    const result = await this.db.updateStatus(
+      event.contractAddress,
+      event.newStatus,
+      _blockHeight,
+    );
+
+    if (result.saved) {
+      this.logger.log(
+        `TradeStatus.Completed | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    } else {
+      this.logger.warn(
+        `TradeStatus.Completed | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    }
+  }
+
+  private async __onDisputedDatabaseAction(
+    event: any,
+    _blockHeight: number,
+  ) {
+    const result = await this.db.updateStatus(
+      event.contractAddress,
+      event.newStatus,
+      _blockHeight,
+    );
+
+    if (result.saved) {
+      this.logger.log(
+        `TradeStatus.Dispute | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    } else {
+      this.logger.warn(
+        `TradeStatus.Dispute | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    }
+  }
+
+  private async __onResolvedDatabaseAction(
+    event: any,
+    _blockHeight: number,
+  ) {
+    const result = await this.db.updateStatus(
+      event.contractAddress,
+      event.newStatus,
+      _blockHeight,
+    );
+
+    if (result.saved) {
+      this.logger.log(
+        `TradeStatus.Resolved | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    } else {
+      this.logger.warn(
+        `TradeStatus.Resolved | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    }
+  }
+
+  private async __onClawbackedDatabaseAction(
+    event: any,
+    _blockHeight: number,
+  ) {
+    const result = await this.db.updateStatus(
+      event.contractAddress,
+      event.newStatus,
+      _blockHeight,
+    );
+
+    if (result.saved) {
+      this.logger.log(
+        `TradeStatus.Clawbacked | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    } else {
+      this.logger.warn(
+        `TradeStatus.Clawbacked | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+      );
+    }
+  }
+  
+  /** Utils **/
 
   private listenToEverythingOnChain() {
     this.wallet.web3.eth.subscribe('logs', {}, (error, result) => {
@@ -381,14 +676,16 @@ enum ContractFactoryTopics {
 }
 
 enum TradeStatus {
-  Pending = '0',
+  ForSale = '0',
   SellerCancelled = '1',
-  Committed = '2',
-  Accepted = '3',
-  Completed = '4',
-  Disputed = '5',
-  Resolved = '6',
-  Clawbacked = '7',
+  BuyerCommitted = '2',
+  BuyerCancelled = '3',
+  SellerCommitted = '4',
+  SellerCancelledAfterBuyerCommitted = '5',
+  Completed = '6',
+  Disputed = '7',
+  Resolved = '8',
+  Clawbacked = '9',
 }
 
 interface ExtraDataToUpdate {
