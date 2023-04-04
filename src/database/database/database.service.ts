@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { FindOneOptions, Repository } from 'typeorm';
 import { ContractEntity } from '../entities/contract-entity/contract.entity';
 import { StatusHistoryEntity } from '../entities/status-history/status-history.entity';
+import { TradeStatus } from './interface';
 
 @Injectable()
 export class DatabaseService {
@@ -157,11 +158,11 @@ export class DatabaseService {
     event: any,
   ): Promise<{ higher: boolean; currentStatus: string; newStatus: string }> {
     try {
-      if (event.newStatus == TradeStatus.Pending) {
+      if (event.newStatus == TradeStatus.ForSale) {
         return {
           higher: true,
           currentStatus: '0',
-          newStatus: TradeStatus.Pending,
+          newStatus: TradeStatus.ForSale,
         };
       }
 
@@ -215,13 +216,13 @@ interface ExtraDataToUpdate {
   disputeReason?: string;
 }
 
-enum TradeStatus {
-  Pending = '0',
-  SellerCancelled = '1',
-  Committed = '2',
-  Accepted = '3',
-  Completed = '4',
-  Disputed = '5',
-  Resolved = '6',
-  Clawbacked = '7',
-}
+// enum TradeStatus {
+//   Pending = '0',
+//   SellerCancelled = '1',
+//   Committed = '2',
+//   Accepted = '3',
+//   Completed = '4',
+//   Disputed = '5',
+//   Resolved = '6',
+//   Clawbacked = '7',
+// }

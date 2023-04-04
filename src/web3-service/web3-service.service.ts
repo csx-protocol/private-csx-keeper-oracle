@@ -5,6 +5,7 @@ import { Wallet } from './wallet';
 
 import { DatabaseService } from '../database/database/database.service';
 import { ContractEntity } from '../database/entities/contract-entity/contract.entity';
+import { TradeStatus } from '../database/database/interface';
 
 @Injectable()
 export class Web3Service implements OnModuleInit {
@@ -673,19 +674,6 @@ const StatusChangeEventValues = [
 
 enum ContractFactoryTopics {
   statusChange = '0xe84cfdc339669fa65116ce7f2ca5c4d0818d0ba66cc7fa49d99a653a89882b1d',
-}
-
-enum TradeStatus {
-  ForSale = '0',
-  SellerCancelled = '1',
-  BuyerCommitted = '2',
-  BuyerCancelled = '3',
-  SellerCommitted = '4',
-  SellerCancelledAfterBuyerCommitted = '5',
-  Completed = '6',
-  Disputed = '7',
-  Resolved = '8',
-  Clawbacked = '9',
 }
 
 interface ExtraDataToUpdate {
