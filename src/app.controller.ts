@@ -1,18 +1,16 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
+import { TrackerService } from './tracker/tracker.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {
-    this.custom();
-  }
+  constructor(
+    private readonly appService: AppService,
+    private readonly tracker: TrackerService,
+  ) {}
 
-  // @Get()
-  // getHello(): string {
-  //   return this.appService.getHello();
-  // }
-
-  custom() {
-    console.log('Custom');
+  @Get()
+  demo(): string {
+    return this.tracker.runDemo();
   }
 }
