@@ -7,7 +7,7 @@ import { AppService } from './app.service';
 import { ContractEntity } from './database/entities/contract-entity/contract.entity';
 import { StatusHistoryEntity } from './database/entities/status-history/status-history.entity';
 import { DatabaseService } from './database/database/database.service';
-import { ItemTrackerService } from './item-tracker/item-tracker.service';
+import { TrackerService } from './tracker/tracker.service';
 import { Web3Service } from './web3-service/web3-service.service';
 import { environment } from './web3-service/environment';
 
@@ -31,6 +31,6 @@ import { environment } from './web3-service/environment';
     TypeOrmModule.forFeature([ContractEntity, StatusHistoryEntity]),
   ],
   controllers: [AppController],
-  providers: [AppService, ItemTrackerService, Web3Service, DatabaseService],
+  providers: [AppService, TrackerService, Web3Service, DatabaseService],
 })
 export class AppModule {}
