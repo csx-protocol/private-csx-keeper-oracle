@@ -16,7 +16,7 @@ export const environment = {
     rpcUrl: process.env.PROVIDER,
   },
   contractFactory: {
-    address: '0xcCd04FB4A854e4aDB63Be5de4D3332bEF9BC1A07',
+    address: '0x5aF07A8AfD7b14eab9B9c89fc524CBa68B2CbA36',
     abi: [
       {
         "inputs": [
@@ -28,6 +28,11 @@ export const environment = {
           {
             "internalType": "address",
             "name": "_users",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_tradeFactoryBaseStorage",
             "type": "address"
           }
         ],
@@ -184,20 +189,6 @@ export const environment = {
         ],
         "stateMutability": "nonpayable",
         "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "totalContracts",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "constant": true
       },
       {
         "inputs": [],
@@ -717,11 +708,6 @@ export const environment = {
         "inputs": [
           {
             "internalType": "address",
-            "name": "_factory",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
             "name": "_keepers",
             "type": "address"
           },
@@ -732,163 +718,106 @@ export const environment = {
           },
           {
             "internalType": "address",
-            "name": "_seller",
+            "name": "_tradeFactoryBaseStorage",
             "type": "address"
           },
           {
             "internalType": "uint256",
-            "name": "_weiPrice",
+            "name": "_baseFee",
             "type": "uint256"
           },
           {
-            "internalType": "string",
-            "name": "_itemMarketName",
-            "type": "string"
-          },
-          {
             "components": [
               {
-                "internalType": "uint256",
-                "name": "partner",
-                "type": "uint256"
+                "internalType": "address",
+                "name": "weth",
+                "type": "address"
               },
               {
-                "internalType": "string",
-                "name": "token",
-                "type": "string"
+                "internalType": "address",
+                "name": "usdc",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "usdt",
+                "type": "address"
               }
             ],
-            "internalType": "struct TradeUrl",
-            "name": "_sellerTradeUrl",
+            "internalType": "struct PaymentTokens",
+            "name": "_paymentTokens",
             "type": "tuple"
           },
           {
-            "internalType": "string",
-            "name": "_sellerAssetId",
-            "type": "string"
+            "internalType": "address",
+            "name": "_referralRegistryAddress",
+            "type": "address"
           },
           {
-            "internalType": "string",
-            "name": "_inspectLink",
-            "type": "string"
+            "internalType": "address",
+            "name": "_sCSXTokenAddress",
+            "type": "address"
           },
           {
-            "internalType": "string",
-            "name": "_itemImageUrl",
-            "type": "string"
-          },
-          {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "value",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "min",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "max",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct FloatInfo",
-            "name": "_float",
-            "type": "tuple"
+            "internalType": "address",
+            "name": "_buyAssistoor",
+            "type": "address"
           }
         ],
         "stateMutability": "nonpayable",
         "type": "constructor"
       },
       {
-        "inputs": [],
-        "name": "buyer",
-        "outputs": [
+        "anonymous": false,
+        "inputs": [
           {
-            "internalType": "address payable",
+            "indexed": false,
+            "internalType": "address",
+            "name": "contractAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "enum TradeStatus",
+            "name": "",
+            "type": "uint8"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "data",
+            "type": "string"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "sellerAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "buyerAddress",
+            "type": "address"
+          }
+        ],
+        "name": "TradeContractStatusChange",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
             "name": "",
             "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "buyerCommittedTimestamp",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "buyerDeposited",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "buyerTradeUrl",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "partner",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "token",
-            "type": "string"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "disputeComplaint",
-        "outputs": [
-          {
-            "internalType": "string",
-            "name": "",
-            "type": "string"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "disputedStatus",
-        "outputs": [
-          {
-            "internalType": "enum TradeStatus",
-            "name": "",
-            "type": "uint8"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "disputeer",
+        "name": "assetIdFromUserAddrssToTradeAddrss",
         "outputs": [
           {
             "internalType": "address",
@@ -901,10 +830,23 @@ export const environment = {
       },
       {
         "inputs": [],
-        "name": "factoryContract",
+        "name": "baseFee",
         "outputs": [
           {
-            "internalType": "contract ITradeFactory",
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "buyAssistoor",
+        "outputs": [
+          {
+            "internalType": "address",
             "name": "",
             "type": "address"
           }
@@ -913,31 +855,32 @@ export const environment = {
         "type": "function"
       },
       {
-        "inputs": [],
-        "name": "float",
-        "outputs": [
+        "inputs": [
           {
-            "internalType": "string",
-            "name": "value",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "min",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "max",
-            "type": "string"
+            "internalType": "uint256",
+            "name": "_baseFee",
+            "type": "uint256"
           }
         ],
-        "stateMutability": "view",
+        "name": "changeBaseFee",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
-        "inputs": [],
-        "name": "hasInit",
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "_assetId",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "sellerAddrss",
+            "type": "address"
+          }
+        ],
+        "name": "hasAlreadyListedItem",
         "outputs": [
           {
             "internalType": "bool",
@@ -949,52 +892,19 @@ export const environment = {
         "type": "function"
       },
       {
-        "inputs": [],
-        "name": "inspectLink",
-        "outputs": [
+        "inputs": [
           {
-            "internalType": "string",
-            "name": "",
-            "type": "string"
+            "internalType": "address",
+            "name": "contractAddress",
+            "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "itemImageUrl",
+        "name": "isThisTradeContract",
         "outputs": [
           {
-            "internalType": "string",
+            "internalType": "bool",
             "name": "",
-            "type": "string"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "itemMarketName",
-        "outputs": [
-          {
-            "internalType": "string",
-            "name": "",
-            "type": "string"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "itemSellerAssetId",
-        "outputs": [
-          {
-            "internalType": "string",
-            "name": "",
-            "type": "string"
+            "type": "bool"
           }
         ],
         "stateMutability": "view",
@@ -1014,11 +924,99 @@ export const environment = {
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "enum TradeStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "internalType": "string",
+            "name": "data",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "sellerAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "buyerAddress",
+            "type": "address"
+          }
+        ],
+        "name": "onStatusChange",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
         "inputs": [],
-        "name": "seller",
+        "name": "paymentTokens",
         "outputs": [
           {
-            "internalType": "address payable",
+            "internalType": "address",
+            "name": "weth",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "usdc",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "usdt",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "referralRegistryAddress",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "_assetId",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "sellerAddrss",
+            "type": "address"
+          }
+        ],
+        "name": "removeAssetIdUsed",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "sCSXTokenAddress",
+        "outputs": [
+          {
+            "internalType": "address",
             "name": "",
             "type": "address"
           }
@@ -1028,64 +1026,12 @@ export const environment = {
       },
       {
         "inputs": [],
-        "name": "sellerTradeUrl",
+        "name": "totalContracts",
         "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "partner",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "token",
-            "type": "string"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "status",
-        "outputs": [
-          {
-            "internalType": "enum TradeStatus",
-            "name": "",
-            "type": "uint8"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
           {
             "internalType": "uint256",
             "name": "",
             "type": "uint256"
-          }
-        ],
-        "name": "stickers",
-        "outputs": [
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "material",
-            "type": "string"
-          },
-          {
-            "internalType": "uint8",
-            "name": "slot",
-            "type": "uint8"
-          },
-          {
-            "internalType": "string",
-            "name": "imageLink",
-            "type": "string"
           }
         ],
         "stateMutability": "view",
@@ -1105,74 +1051,519 @@ export const environment = {
         "type": "function"
       },
       {
-        "inputs": [],
-        "name": "weaponType",
-        "outputs": [
-          {
-            "internalType": "string",
-            "name": "",
-            "type": "string"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "weiPrice",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
         "inputs": [
           {
             "components": [
               {
                 "internalType": "string",
-                "name": "name",
+                "name": "itemMarketName",
+                "type": "string"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "partner",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "token",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct TradeUrl",
+                "name": "tradeUrl",
+                "type": "tuple"
+              },
+              {
+                "internalType": "string",
+                "name": "assetId",
                 "type": "string"
               },
               {
                 "internalType": "string",
-                "name": "material",
+                "name": "inspectLink",
                 "type": "string"
               },
               {
-                "internalType": "uint8",
-                "name": "slot",
+                "internalType": "string",
+                "name": "itemImageUrl",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "weiPrice",
+                "type": "uint256"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "floatValues",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "paintSeed",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "paintIndex",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct SkinInfo",
+                "name": "skinInfo",
+                "type": "tuple"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "material",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "slot",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "imageLink",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct Sticker[]",
+                "name": "stickers",
+                "type": "tuple[]"
+              },
+              {
+                "internalType": "string",
+                "name": "weaponType",
+                "type": "string"
+              },
+              {
+                "internalType": "enum PriceType",
+                "name": "priceType",
+                "type": "uint8"
+              }
+            ],
+            "internalType": "struct ListingParams",
+            "name": "params",
+            "type": "tuple"
+          }
+        ],
+        "name": "createListingContract",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "index",
+            "type": "uint256"
+          }
+        ],
+        "name": "getTradeDetailsByIndex",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "contractAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "seller",
+                "type": "address"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "partner",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "token",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct TradeUrl",
+                "name": "sellerTradeUrl",
+                "type": "tuple"
+              },
+              {
+                "internalType": "address",
+                "name": "buyer",
+                "type": "address"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "partner",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "token",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct TradeUrl",
+                "name": "buyerTradeUrl",
+                "type": "tuple"
+              },
+              {
+                "internalType": "string",
+                "name": "itemMarketName",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "inspectLink",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "itemImageUrl",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "weiPrice",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "averageSellerDeliveryTime",
+                "type": "uint256"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "floatValues",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "paintSeed",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "paintIndex",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct SkinInfo",
+                "name": "skinInfo",
+                "type": "tuple"
+              },
+              {
+                "internalType": "enum TradeStatus",
+                "name": "status",
+                "type": "uint8"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "material",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "slot",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "imageLink",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct Sticker[]",
+                "name": "stickers",
+                "type": "tuple[]"
+              },
+              {
+                "internalType": "string",
+                "name": "weaponType",
+                "type": "string"
+              },
+              {
+                "internalType": "enum PriceType",
+                "name": "priceType",
                 "type": "uint8"
               },
               {
                 "internalType": "string",
-                "name": "imageLink",
+                "name": "assetId",
                 "type": "string"
               }
             ],
-            "internalType": "struct Sticker[]",
-            "name": "_stickers",
-            "type": "tuple[]"
-          },
-          {
-            "internalType": "string",
-            "name": "_weaponType",
-            "type": "string"
+            "internalType": "struct TradeInfo",
+            "name": "result",
+            "type": "tuple"
           }
         ],
-        "name": "initExtraInfo",
-        "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "view",
         "type": "function"
       },
       {
-        "inputs": [],
-        "name": "stickerLength",
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "tradeAddrs",
+            "type": "address"
+          }
+        ],
+        "name": "getTradeDetailsByAddress",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "contractAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "seller",
+                "type": "address"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "partner",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "token",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct TradeUrl",
+                "name": "sellerTradeUrl",
+                "type": "tuple"
+              },
+              {
+                "internalType": "address",
+                "name": "buyer",
+                "type": "address"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "partner",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "token",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct TradeUrl",
+                "name": "buyerTradeUrl",
+                "type": "tuple"
+              },
+              {
+                "internalType": "string",
+                "name": "itemMarketName",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "inspectLink",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "itemImageUrl",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "weiPrice",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "averageSellerDeliveryTime",
+                "type": "uint256"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "floatValues",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "paintSeed",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "paintIndex",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct SkinInfo",
+                "name": "skinInfo",
+                "type": "tuple"
+              },
+              {
+                "internalType": "enum TradeStatus",
+                "name": "status",
+                "type": "uint8"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "material",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "slot",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "imageLink",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct Sticker[]",
+                "name": "stickers",
+                "type": "tuple[]"
+              },
+              {
+                "internalType": "string",
+                "name": "weaponType",
+                "type": "string"
+              },
+              {
+                "internalType": "enum PriceType",
+                "name": "priceType",
+                "type": "uint8"
+              },
+              {
+                "internalType": "string",
+                "name": "assetId",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct TradeInfo",
+            "name": "result",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "enum TradeStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "indexFrom",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxResults",
+            "type": "uint256"
+          }
+        ],
+        "name": "getTradeIndexesByStatus",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "index",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "weiPrice",
+                "type": "uint256"
+              },
+              {
+                "internalType": "enum PriceType",
+                "name": "priceType",
+                "type": "uint8"
+              },
+              {
+                "internalType": "string",
+                "name": "weaponType",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "itemMarketName",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "nextIndex",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct TradeIndex[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "enum TradeStatus",
+            "name": "status",
+            "type": "uint8"
+          }
+        ],
+        "name": "getTradeCountByStatus",
         "outputs": [
           {
             "internalType": "uint256",
@@ -1181,106 +1572,6 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "sellerCancel",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "partner",
-                "type": "uint256"
-              },
-              {
-                "internalType": "string",
-                "name": "token",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct TradeUrl",
-            "name": "_buyerTradeUrl",
-            "type": "tuple"
-          }
-        ],
-        "name": "commitBuy",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bool",
-            "name": "isTradeMade",
-            "type": "bool"
-          }
-        ],
-        "name": "keeperNodeConfirmsTrade",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "acceptTradeOffer",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "confirmReceived",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "string",
-            "name": "_complaint",
-            "type": "string"
-          }
-        ],
-        "name": "openDispute",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bool",
-            "name": "isFavourOfBuyer",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "giveWarningToSeller",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "giveWarningToBuyer",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "isWithValue",
-            "type": "bool"
-          }
-        ],
-        "name": "resolveDispute",
-        "outputs": [],
-        "stateMutability": "nonpayable",
         "type": "function"
       }
     ],
