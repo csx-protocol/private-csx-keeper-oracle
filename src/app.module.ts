@@ -10,6 +10,7 @@ import { DatabaseService } from './database/database/database.service';
 import { TrackerService } from './tracker/tracker.service';
 import { Web3Service } from './web3-service/web3-service.service';
 import { environment } from './web3-service/environment';
+import { FloatApiService } from './float-api/float-api.service';
 
 @Module({
   imports: [
@@ -31,6 +32,12 @@ import { environment } from './web3-service/environment';
     TypeOrmModule.forFeature([ContractEntity, StatusHistoryEntity]),
   ],
   controllers: [AppController],
-  providers: [AppService, TrackerService, Web3Service, DatabaseService],
+  providers: [
+    AppService,
+    TrackerService,
+    Web3Service,
+    DatabaseService,
+    FloatApiService,
+  ],
 })
 export class AppModule {}
