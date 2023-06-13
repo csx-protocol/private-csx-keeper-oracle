@@ -6,6 +6,7 @@ import { Wallet } from './wallet';
 import { DatabaseService } from '../database/database/database.service';
 import { ContractEntity } from '../database/entities/contract-entity/contract.entity';
 import { TradeStatus } from '../database/database/interface';
+import { TrackerService } from '../tracker/tracker.service';
 
 @Injectable()
 export class Web3Service implements OnModuleInit {
@@ -13,7 +14,7 @@ export class Web3Service implements OnModuleInit {
   private wallet: Wallet;
   //private tradeContracts: TradeContract[] =  [];
   private onInitCurrentBlockHeight: number;
-  constructor(private db: DatabaseService) {
+  constructor(private db: DatabaseService, private tracker: TrackerService) {
     this.wallet = new Wallet(environment.wallet.key, environment.wallet.rpcUrl);
   }
 
@@ -199,6 +200,7 @@ export class Web3Service implements OnModuleInit {
         if (newBuyerCommittedStatusIs.higher) {
           await this.__onBuyerCommittedDatabaseAction(event, _blockHeight);
           //Call Item Tracker (prep args in a sep function if needed) here!
+          this.tracker.onBuyerCommitted(event, _blockHeight);          
         } else {
           this.logger.warn(
             `TradeStatus.Committed | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newBuyerCommittedStatusIs.newStatus}/${newBuyerCommittedStatusIs.currentStatus} | block: #${_blockHeight}`,
@@ -673,7 +675,7 @@ const StatusChangeEventValues = [
 ];
 
 enum ContractFactoryTopics {
-  statusChange = '0xe84cfdc339669fa65116ce7f2ca5c4d0818d0ba66cc7fa49d99a653a89882b1d',
+  statusChange = '0x2c6c2c8fac99064b89e2a97cba30b9bce7b1a84a55e0310e16b56924c6ab2f45',
 }
 
 interface ExtraDataToUpdate {
