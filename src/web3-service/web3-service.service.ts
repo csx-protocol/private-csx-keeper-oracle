@@ -388,11 +388,11 @@ export class Web3Service implements OnModuleInit {
 
     const newStore: ContractEntity = {
       id: null,
-      assetId: dataArray[2],
+      assetId: dataArray[1],
       contractAddress: event.contractAddress,
       itemMarketName: dataArray[0],
       status: event.newStatus,
-      sellerTradeUrl: dataArray[1],
+      sellerTradeUrl: dataArray[2],
       buyerTradeUrl: '',
       isDisputed: false,
       disputeReason: '',
