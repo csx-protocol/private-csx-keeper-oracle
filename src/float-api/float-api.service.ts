@@ -2,7 +2,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { catchError, of } from 'rxjs';
+import { catchError, of, firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class FloatApiService {
@@ -16,7 +16,7 @@ export class FloatApiService {
 
   async getFloat(inspectLink: string): Promise<any> {
     const TEMP_API = 'http://localhost:1337/?url=';
-    return this.httpService.get<any>(TEMP_API + inspectLink).pipe(
+    const obs$ = this.httpService.get<any>(TEMP_API + inspectLink).pipe(
       catchError((error) => {
         if (error.status === 500) {
           return of(ErrorMessages[ErrorCodes.InternalError]);
@@ -30,5 +30,10 @@ export class FloatApiService {
         }
       }),
     );
+  
+    // Convert the Observable to a Promise
+    const result = await firstValueFrom(obs$);
+  
+    return result;
   }
 }
