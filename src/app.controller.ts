@@ -1,6 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { AppService } from './app.service';
-import { TrackerService } from './tracker/tracker.service';
+import { TrackerService } from './tracker-service/tracker.service';
 
 @Controller()
 export class AppController {
@@ -9,8 +9,9 @@ export class AppController {
     private readonly tracker: TrackerService,
   ) {}
 
-  @Get()
-  demo(): string {
-    return this.tracker.runDemo();
+  // params steamID
+  @Get('inventory/:steamId64')
+  async getInventory(@Param('steamId64') steamId64: string): Promise<any> {
+    return this.tracker.getInventory(steamId64);
   }
 }
