@@ -34,6 +34,48 @@ export const environment = {
             "internalType": "address",
             "name": "_tradeFactoryBaseStorage",
             "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_baseFee",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "weth",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "usdc",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "usdt",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct PaymentTokens",
+            "name": "_paymentTokens",
+            "type": "tuple"
+          },
+          {
+            "internalType": "address",
+            "name": "_referralRegistryAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_sCSXTokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_buyAssistoor",
+            "type": "address"
           }
         ],
         "stateMutability": "nonpayable",
@@ -59,6 +101,18 @@ export const environment = {
             "internalType": "string",
             "name": "data",
             "type": "string"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "sellerAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "buyerAddress",
+            "type": "address"
           }
         ],
         "name": "TradeContractStatusChange",
@@ -86,8 +140,46 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
-        "type": "function",
-        "constant": true
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "baseFee",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "buyAssistoor",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_baseFee",
+            "type": "uint256"
+          }
+        ],
+        "name": "changeBaseFee",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
       },
       {
         "inputs": [
@@ -111,8 +203,7 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
-        "type": "function",
-        "constant": true
+        "type": "function"
       },
       {
         "inputs": [
@@ -131,8 +222,7 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
-        "type": "function",
-        "constant": true
+        "type": "function"
       },
       {
         "inputs": [],
@@ -145,8 +235,7 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
-        "type": "function",
-        "constant": true
+        "type": "function"
       },
       {
         "inputs": [
@@ -159,11 +248,57 @@ export const environment = {
             "internalType": "string",
             "name": "data",
             "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "sellerAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "buyerAddress",
+            "type": "address"
           }
         ],
         "name": "onStatusChange",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "paymentTokens",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "weth",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "usdc",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "usdt",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "referralRegistryAddress",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
         "type": "function"
       },
       {
@@ -192,6 +327,32 @@ export const environment = {
       },
       {
         "inputs": [],
+        "name": "sCSXTokenAddress",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "totalContracts",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
         "name": "usersContract",
         "outputs": [
           {
@@ -201,106 +362,117 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
-        "type": "function",
-        "constant": true
+        "type": "function"
       },
       {
         "inputs": [
           {
-            "internalType": "string",
-            "name": "_itemMarketName",
-            "type": "string"
-          },
-          {
             "components": [
               {
+                "internalType": "string",
+                "name": "itemMarketName",
+                "type": "string"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "partner",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "token",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct TradeUrl",
+                "name": "tradeUrl",
+                "type": "tuple"
+              },
+              {
+                "internalType": "string",
+                "name": "assetId",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "inspectLink",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "itemImageUrl",
+                "type": "string"
+              },
+              {
                 "internalType": "uint256",
-                "name": "partner",
+                "name": "weiPrice",
                 "type": "uint256"
               },
               {
-                "internalType": "string",
-                "name": "token",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct TradeUrl",
-            "name": "_tradeUrl",
-            "type": "tuple"
-          },
-          {
-            "internalType": "string",
-            "name": "_assetId",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "_inspectLink",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "_itemImageUrl",
-            "type": "string"
-          },
-          {
-            "internalType": "uint256",
-            "name": "_weiPrice",
-            "type": "uint256"
-          },
-          {
-            "components": [
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "floatValues",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "paintSeed",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "paintIndex",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct SkinInfo",
+                "name": "skinInfo",
+                "type": "tuple"
+              },
               {
-                "internalType": "string",
-                "name": "value",
-                "type": "string"
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "material",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "slot",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "imageLink",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct Sticker[]",
+                "name": "stickers",
+                "type": "tuple[]"
               },
               {
                 "internalType": "string",
-                "name": "min",
+                "name": "weaponType",
                 "type": "string"
               },
               {
-                "internalType": "string",
-                "name": "max",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct FloatInfo",
-            "name": "_float",
-            "type": "tuple"
-          },
-          {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "material",
-                "type": "string"
-              },
-              {
-                "internalType": "uint8",
-                "name": "slot",
+                "internalType": "enum PriceType",
+                "name": "priceType",
                 "type": "uint8"
-              },
-              {
-                "internalType": "string",
-                "name": "imageLink",
-                "type": "string"
               }
             ],
-            "internalType": "struct Sticker[]",
-            "name": "_stickers",
-            "type": "tuple[]"
-          },
-          {
-            "internalType": "string",
-            "name": "_weaponType",
-            "type": "string"
+            "internalType": "struct ListingParams",
+            "name": "params",
+            "type": "tuple"
           }
         ],
         "name": "createListingContract",
@@ -398,22 +570,22 @@ export const environment = {
                 "components": [
                   {
                     "internalType": "string",
-                    "name": "value",
+                    "name": "floatValues",
                     "type": "string"
                   },
                   {
-                    "internalType": "string",
-                    "name": "min",
-                    "type": "string"
+                    "internalType": "uint256",
+                    "name": "paintSeed",
+                    "type": "uint256"
                   },
                   {
-                    "internalType": "string",
-                    "name": "max",
-                    "type": "string"
+                    "internalType": "uint256",
+                    "name": "paintIndex",
+                    "type": "uint256"
                   }
                 ],
-                "internalType": "struct FloatInfo",
-                "name": "float",
+                "internalType": "struct SkinInfo",
+                "name": "skinInfo",
                 "type": "tuple"
               },
               {
@@ -452,6 +624,16 @@ export const environment = {
                 "internalType": "string",
                 "name": "weaponType",
                 "type": "string"
+              },
+              {
+                "internalType": "enum PriceType",
+                "name": "priceType",
+                "type": "uint8"
+              },
+              {
+                "internalType": "string",
+                "name": "assetId",
+                "type": "string"
               }
             ],
             "internalType": "struct TradeInfo",
@@ -460,8 +642,7 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
-        "type": "function",
-        "constant": true
+        "type": "function"
       },
       {
         "inputs": [
@@ -553,22 +734,22 @@ export const environment = {
                 "components": [
                   {
                     "internalType": "string",
-                    "name": "value",
+                    "name": "floatValues",
                     "type": "string"
                   },
                   {
-                    "internalType": "string",
-                    "name": "min",
-                    "type": "string"
+                    "internalType": "uint256",
+                    "name": "paintSeed",
+                    "type": "uint256"
                   },
                   {
-                    "internalType": "string",
-                    "name": "max",
-                    "type": "string"
+                    "internalType": "uint256",
+                    "name": "paintIndex",
+                    "type": "uint256"
                   }
                 ],
-                "internalType": "struct FloatInfo",
-                "name": "float",
+                "internalType": "struct SkinInfo",
+                "name": "skinInfo",
                 "type": "tuple"
               },
               {
@@ -607,6 +788,16 @@ export const environment = {
                 "internalType": "string",
                 "name": "weaponType",
                 "type": "string"
+              },
+              {
+                "internalType": "enum PriceType",
+                "name": "priceType",
+                "type": "uint8"
+              },
+              {
+                "internalType": "string",
+                "name": "assetId",
+                "type": "string"
               }
             ],
             "internalType": "struct TradeInfo",
@@ -615,8 +806,7 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
-        "type": "function",
-        "constant": true
+        "type": "function"
       },
       {
         "inputs": [
@@ -677,8 +867,7 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
-        "type": "function",
-        "constant": true
+        "type": "function"
       },
       {
         "inputs": [
@@ -697,8 +886,7 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
-        "type": "function",
-        "constant": true
+        "type": "function"
       }
     ],
   },
