@@ -25,6 +25,7 @@
     "@nestjs/config": "^2.2.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
+    "@nestjs/schedule": "^3.0.0",
     "@nestjs/typeorm": "^9.0.1",
     "@truffle/hdwallet-provider": "^2.1.12",
     "axios": "^1.2.3",
