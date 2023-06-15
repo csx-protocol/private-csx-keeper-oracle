@@ -7,7 +7,7 @@ import { AxiosError } from 'axios';
 import { FloatApiService } from '../float-api/float-api.service';
 import { WalletService } from '../web3-service/wallet.service';
 import { environment } from 'src/web3-service/environment';
-import { isEqual } from 'lodash';
+import { TrackService } from './track.service';
 
 @Injectable()
 export class TrackerService {
@@ -17,6 +17,7 @@ export class TrackerService {
     private readonly floatService: FloatApiService,
     private readonly walletService: WalletService,
     private config: ConfigService,
+    private readonly trackService: TrackService
   ) {
     this.logger.log('TrackerService dependencies injected');
   }
@@ -88,12 +89,36 @@ export class TrackerService {
   // Track Item in Inventory.
   // Input assetId,
 
-  onBuyerCommitted(event: any, blockHeight: number): void {
+  async onBuyerCommitted(event: any, blockHeight: number): Promise<void> {
     // Validate if float, paint seed, pattern index is same in contract and inspect url.
     // If not, cancel trade and refund.
 
     //
-    this.validateItem(event.contractAddress);
+    const [isValid, assetId] = await this.validateItem(event.contractAddress);
+    if (!isValid) {
+      // Cancel trade and refund.
+      // return;
+    }
+
+    // data: '225482466+EP2Wgs2R||225482469+lKCMUg5E||0xd336c5e997055bce143060745dfa2a5e161c5681||1489077140000000000'
+    // 225482466 is the seller partnerId we need to convert to Steamid64
+    // 225482469 is the buyer partnerId we need to conver to Steamid64
+
+    const data = event.data.split('||');
+    const sellerPartnerId = data[0].split('+')[0];
+    const buyerPartnerId = data[1].split('+')[0];
+
+    const sellerPartnerIdInt = parseInt(sellerPartnerId);
+    const buyerPartnerIdInt = parseInt(buyerPartnerId);
+
+    const sellerSteamId64 = `7656119${sellerPartnerIdInt + 7960265728}`;
+    const buyerSteamId64 = `7656119${buyerPartnerIdInt + 7960265728}`;
+
+    // trackItem(originId: string, destinationId: string, assetId: string): Promise<void>
+    // originId = seller SteamId64
+    // destinationId = buyer SteamId64
+    // assetId = item's assetId in seller inventory
+    this.trackService.trackItem(sellerSteamId64, buyerSteamId64, assetId);
 
     // TODO: Implement method
 
@@ -175,7 +200,7 @@ export class TrackerService {
    * Validates if the item info from the contract is the same as the item info from the inspect url.
    */
 
-  async validateItem(contractAddress: string): Promise<void> {
+  async validateItem(contractAddress: string): Promise<[boolean, string]> {
     try {
       const contract = await this._getFactoryContract();
   
@@ -193,6 +218,7 @@ export class TrackerService {
       const isValid = Object.values(validationResults).every((result: ValidationResult) => result.isEqual);
   
       console.log(`Item validation result: ${isValid ? 'Valid' : 'Invalid'}`);
+      return [isValid, results.assetId];
     } catch (error) {
       console.error(`Failed to validate item ${contractAddress}`, error);
     }
