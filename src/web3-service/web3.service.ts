@@ -1,22 +1,22 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { environment } from './environment';
-import { Wallet } from './wallet';
 
 import { DatabaseService } from '../database/database/database.service';
 import { ContractEntity } from '../database/entities/contract-entity/contract.entity';
 import { TradeStatus } from '../database/database/interface';
-import { TrackerService } from '../tracker/tracker.service';
+import { TrackerService } from '../tracker-service/tracker.service';
+import { WalletService } from './wallet.service';
 
 @Injectable()
 export class Web3Service implements OnModuleInit {
   private readonly logger = new Logger(Web3Service.name);
-  private wallet: Wallet;
-  //private tradeContracts: TradeContract[] =  [];
   private onInitCurrentBlockHeight: number;
-  constructor(private db: DatabaseService, private tracker: TrackerService) {
-    this.wallet = new Wallet(environment.wallet.key, environment.wallet.rpcUrl);
-  }
+  constructor(
+    private db: DatabaseService,
+    private tracker: TrackerService,
+    private signer: WalletService,
+  ) {}
 
   /** Genereic functions  **/
 
@@ -50,7 +50,7 @@ export class Web3Service implements OnModuleInit {
       toBlock: _toBlockHeight,
     };
 
-    /** this.subscription = */ this.wallet.web3.eth
+    /** this.subscription = */ this.signer.wallet.web3.eth
       .getPastLogs(options)
       .then(async (logs) => {
         // sort the logs based on their block height
@@ -103,7 +103,7 @@ export class Web3Service implements OnModuleInit {
       topics: [ContractFactoryTopics.statusChange],
       fromBlock: _blockHeight,
     };
-    /** this.subscription = */ this.wallet.web3.eth
+    /** this.subscription = */ this.signer.wallet.web3.eth
       .subscribe('logs', options, async (error, log) => {
         if (error) {
           console.log('error!', error);
@@ -145,7 +145,7 @@ export class Web3Service implements OnModuleInit {
   }
 
   private _decodeLog(any: any[], log: any): any {
-    return this.wallet.web3.eth.abi.decodeLog(any, log.data, log.topics);
+    return this.signer.wallet.web3.eth.abi.decodeLog(any, log.data, log.topics);
   }
 
   /** Switch Status Change **/
@@ -200,7 +200,7 @@ export class Web3Service implements OnModuleInit {
         if (newBuyerCommittedStatusIs.higher) {
           await this.__onBuyerCommittedDatabaseAction(event, _blockHeight);
           //Call Item Tracker (prep args in a sep function if needed) here!
-          this.tracker.onBuyerCommitted(event, _blockHeight);          
+          this.tracker.onBuyerCommitted(event, _blockHeight);
         } else {
           this.logger.warn(
             `TradeStatus.Committed | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newBuyerCommittedStatusIs.newStatus}/${newBuyerCommittedStatusIs.currentStatus} | block: #${_blockHeight}`,
@@ -550,10 +550,7 @@ export class Web3Service implements OnModuleInit {
     }
   }
 
-  private async __onCompletedDatabaseAction(
-    event: any,
-    _blockHeight: number,
-  ) {
+  private async __onCompletedDatabaseAction(event: any, _blockHeight: number) {
     const result = await this.db.updateStatus(
       event.contractAddress,
       event.newStatus,
@@ -571,10 +568,7 @@ export class Web3Service implements OnModuleInit {
     }
   }
 
-  private async __onDisputedDatabaseAction(
-    event: any,
-    _blockHeight: number,
-  ) {
+  private async __onDisputedDatabaseAction(event: any, _blockHeight: number) {
     const result = await this.db.updateStatus(
       event.contractAddress,
       event.newStatus,
@@ -592,10 +586,7 @@ export class Web3Service implements OnModuleInit {
     }
   }
 
-  private async __onResolvedDatabaseAction(
-    event: any,
-    _blockHeight: number,
-  ) {
+  private async __onResolvedDatabaseAction(event: any, _blockHeight: number) {
     const result = await this.db.updateStatus(
       event.contractAddress,
       event.newStatus,
@@ -613,10 +604,7 @@ export class Web3Service implements OnModuleInit {
     }
   }
 
-  private async __onClawbackedDatabaseAction(
-    event: any,
-    _blockHeight: number,
-  ) {
+  private async __onClawbackedDatabaseAction(event: any, _blockHeight: number) {
     const result = await this.db.updateStatus(
       event.contractAddress,
       event.newStatus,
@@ -633,11 +621,11 @@ export class Web3Service implements OnModuleInit {
       );
     }
   }
-  
+
   /** Utils **/
 
   private listenToEverythingOnChain() {
-    this.wallet.web3.eth.subscribe('logs', {}, (error, result) => {
+    this.signer.wallet.web3.eth.subscribe('logs', {}, (error, result) => {
       if (error) {
         console.log(error);
       } else {
@@ -652,7 +640,7 @@ export class Web3Service implements OnModuleInit {
   }
 
   private async getCurrentBlockHeight(): Promise<number> {
-    return await this.wallet.web3.eth.getBlockNumber();
+    return await this.signer.wallet.web3.eth.getBlockNumber();
   }
 }
 
