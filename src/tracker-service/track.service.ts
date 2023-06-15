@@ -143,7 +143,7 @@ export class TrackService {
     }
   }
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_MINUTE)
   async handleCron(): Promise<void> {
     if (!this.cronEnabled) return this.logger.warn('Cron is disabled.');
     await this.checkTrackedItems();
