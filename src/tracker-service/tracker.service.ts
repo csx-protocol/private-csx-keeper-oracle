@@ -6,6 +6,8 @@ import { catchError, firstValueFrom /*of*/ } from 'rxjs';
 import { AxiosError } from 'axios';
 import { FloatApiService } from '../float-api/float-api.service';
 import { WalletService } from '../web3-service/wallet.service';
+import { environment } from 'src/web3-service/environment';
+import { isEqual } from 'lodash';
 
 @Injectable()
 export class TrackerService {
@@ -67,8 +69,10 @@ export class TrackerService {
     return await this.getInventory(_steamId64);
   }
 
+  // 
+
   // on BuyerCommitted:
-  // Snapshot inventory of seller. (validate seller has item(apiFloatCheckIt and compare with contract event float))
+  // Snapshot inventory of seller. (validate seller has item name and remember count)
   // Snapshot inventory of buyer (check if buyer has market_hash_name and remember count).
 
   // on SellerCommitted:
@@ -89,6 +93,7 @@ export class TrackerService {
     // If not, cancel trade and refund.
 
     //
+    this.validateItem(event.contractAddress);
 
     // TODO: Implement method
 
@@ -166,21 +171,94 @@ export class TrackerService {
     // TODO: Implement method
   }
 
-  //
+  /**
+   * Validates if the item info from the contract is the same as the item info from the inspect url.
+   */
 
-  // Validate if float, paint seed, pattern index from inspect url and check if its the same in contract and inspect url.
-  async validateItem(_inspectUrl: string, contractAddress: string) {
-    // TODO: Implement method
-    const fetchedData = await this.floatService.getFloat(_inspectUrl);
-    console.log('fetchedData', fetchedData);
-    
-    
+  async validateItem(contractAddress: string): Promise<void> {
+    try {
+      const contract = await this._getFactoryContract();
+  
+      const results = await contract.methods.getTradeDetailsByAddress(contractAddress).call({ from: this.walletService.wallet.myAccount });
+      
+      const onChainInfo = this._extractChainItemInfo(results.skinInfo, results.assetId);
+  
+      const fetchedData = await this.floatService.getFloat(results.inspectLink);
+      const steamInfo = this._extractSteamItemInfo(fetchedData.data.iteminfo);
+  
+      const validationResults = this._validateItemInfo(onChainInfo, steamInfo);
+  
+      console.log(`Item validation results: ${JSON.stringify(validationResults, null, 2)}`);
+  
+      const isValid = Object.values(validationResults).every((result: ValidationResult) => result.isEqual);
+  
+      console.log(`Item validation result: ${isValid ? 'Valid' : 'Invalid'}`);
+    } catch (error) {
+      console.error(`Failed to validate item ${contractAddress}`, error);
+    }
+  }
+  
+  private _extractChainItemInfo(skinInfo: any, assetId: string): ItemInfo {
+    return {
+      floatValue: JSON.parse(skinInfo.floatValues)[2],
+      paintSeed: parseInt(skinInfo.paintSeed, 10),
+      paintIndex: parseInt(skinInfo.paintIndex, 10),
+      assetId: parseInt(assetId, 10)
+    };
+  }
+  
+  private _extractSteamItemInfo(itemInfo: any): ItemInfo {
+    return {
+      floatValue: itemInfo.floatvalue,
+      paintSeed: itemInfo.paintseed,
+      paintIndex: itemInfo.paintindex,
+      assetId: itemInfo.a
+    };
+  }
+  
+  private _validateItemInfo(onChainInfo: ItemInfo, steamInfo: ItemInfo): ValidationResults {
+    return {
+      floatValue: {
+        isEqual: onChainInfo.floatValue === steamInfo.floatValue,
+        onChainValue: onChainInfo.floatValue,
+        steamValue: steamInfo.floatValue,
+      },
+      paintSeed: {
+        isEqual: onChainInfo.paintSeed === steamInfo.paintSeed,
+        onChainValue: onChainInfo.paintSeed,
+        steamValue: steamInfo.paintSeed,
+      },
+      paintIndex: {
+        isEqual: onChainInfo.paintIndex === steamInfo.paintIndex,
+        onChainValue: onChainInfo.paintIndex,
+        steamValue: steamInfo.paintIndex,
+      },
+    };
+  }
+  
+  private async _getFactoryContract() {
+    return this.walletService.wallet.connectContract(
+      environment.contractFactory.address,
+      environment.contractFactory.abi,
+    );
   }
 }
 
-interface Snapshot {
-  steamId64: string;
-  inventory: any[];
-  valid: boolean;
-  hashNameCount: number;
-}
+type ItemInfo = {
+  floatValue: number;
+  paintSeed: number;
+  paintIndex: number;
+  assetId: number;
+};
+
+type ValidationResult = {
+  isEqual: boolean;
+  onChainValue: number;
+  steamValue: number;
+};
+
+type ValidationResults = {
+  floatValue: ValidationResult;
+  paintSeed: ValidationResult;
+  paintIndex: ValidationResult;
+};
