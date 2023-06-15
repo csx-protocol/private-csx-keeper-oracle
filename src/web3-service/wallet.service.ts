@@ -1,8 +1,5 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, Logger } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
-import { FloatApiService } from '../float-api/float-api.service';
 import { Wallet } from './wallet';
 import { environment } from './environment';
 
