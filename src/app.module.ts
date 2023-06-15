@@ -7,10 +7,11 @@ import { AppService } from './app.service';
 import { ContractEntity } from './database/entities/contract-entity/contract.entity';
 import { StatusHistoryEntity } from './database/entities/status-history/status-history.entity';
 import { DatabaseService } from './database/database/database.service';
-import { TrackerService } from './tracker/tracker.service';
-import { Web3Service } from './web3-service/web3-service.service';
+import { TrackerService } from './tracker-service/tracker.service';
+import { Web3Service } from './web3-service/web3.service';
 import { environment } from './web3-service/environment';
 import { FloatApiService } from './float-api/float-api.service';
+import { WalletService } from './web3-service/wallet.service';
 
 @Module({
   imports: [
@@ -34,8 +35,9 @@ import { FloatApiService } from './float-api/float-api.service';
   controllers: [AppController],
   providers: [
     AppService,
-    TrackerService,
+    WalletService,
     Web3Service,
+    TrackerService,
     DatabaseService,
     FloatApiService,
   ],

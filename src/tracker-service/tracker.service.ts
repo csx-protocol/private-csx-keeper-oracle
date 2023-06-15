@@ -4,12 +4,16 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { catchError, firstValueFrom /*of*/ } from 'rxjs';
 import { AxiosError } from 'axios';
+import { FloatApiService } from '../float-api/float-api.service';
+import { WalletService } from '../web3-service/wallet.service';
 
 @Injectable()
 export class TrackerService {
   private readonly logger = new Logger(TrackerService.name);
   constructor(
     private readonly httpService: HttpService,
+    private readonly floatService: FloatApiService,
+    private readonly walletService: WalletService,
     private config: ConfigService,
   ) {
     this.logger.log('TrackerService dependencies injected');
@@ -81,7 +85,20 @@ export class TrackerService {
   // Input assetId,
 
   onBuyerCommitted(event: any, blockHeight: number): void {
+    // Validate if float, paint seed, pattern index is same in contract and inspect url.
+    // If not, cancel trade and refund.
+
+    //
+
     // TODO: Implement method
+
+    // Fetch inspectURL, float, paint seed, pattern index and store to db.
+    // Check if item is in seller inventory. ()
+    // If so, check if seller has market_hash_name and remember count.
+    // Start interval check if item is in seller inventory.
+    //
+    // Interval check if item is in buyer inventory.
+    // If so, check if buyer has market_hash_name and remember count + 1.
 
     console.log('Tracker: onBuyerCommitted', event, blockHeight);
 
@@ -147,6 +164,17 @@ export class TrackerService {
 
   onSellerCancelledAfterBuyerCommitted(): void {
     // TODO: Implement method
+  }
+
+  //
+
+  // Validate if float, paint seed, pattern index from inspect url and check if its the same in contract and inspect url.
+  async validateItem(_inspectUrl: string, contractAddress: string) {
+    // TODO: Implement method
+    const fetchedData = await this.floatService.getFloat(_inspectUrl);
+    console.log('fetchedData', fetchedData);
+    
+    
   }
 }
 
