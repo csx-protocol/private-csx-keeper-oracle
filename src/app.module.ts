@@ -1,5 +1,6 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -12,10 +13,13 @@ import { Web3Service } from './web3-service/web3.service';
 import { environment } from './web3-service/environment';
 import { FloatApiService } from './float-api/float-api.service';
 import { WalletService } from './web3-service/wallet.service';
+import { TrackService } from './tracker-service/track.service';
+import { TrackedItem } from './database/entities/tracked-items/tracked-items.entity';
 
 @Module({
   imports: [
     HttpModule,
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -30,7 +34,11 @@ import { WalletService } from './web3-service/wallet.service';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([ContractEntity, StatusHistoryEntity]),
+    TypeOrmModule.forFeature([
+      ContractEntity,
+      StatusHistoryEntity,
+      TrackedItem,
+    ]),
   ],
   controllers: [AppController],
   providers: [
@@ -38,6 +46,7 @@ import { WalletService } from './web3-service/wallet.service';
     WalletService,
     Web3Service,
     TrackerService,
+    TrackService,
     DatabaseService,
     FloatApiService,
   ],
