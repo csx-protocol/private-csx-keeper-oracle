@@ -33,7 +33,7 @@ export class Web3Service implements OnModuleInit {
       );
     } else {
       this.logger.error(
-        `SystemStatus.Crashed | Incorrect blockHeights | current: ${this.onInitCurrentBlockHeight} vs vs last known: ${lastKnownDbBlockHeight}`,
+        `SystemStatus.Crashed | Incorrect blockHeights | current: ${this.onInitCurrentBlockHeight} vs last known: ${lastKnownDbBlockHeight}`,
       );
       process.exit(1); //Exit NestJS
     }
@@ -196,11 +196,11 @@ export class Web3Service implements OnModuleInit {
          */
         const newBuyerCommittedStatusIs = await this.db.isStatusHigherThanKnown(
           event,
-        );
+        );this.tracker.onBuyerCommitted(event, _blockHeight);
         if (newBuyerCommittedStatusIs.higher) {
           await this.__onBuyerCommittedDatabaseAction(event, _blockHeight);
           //Call Item Tracker (prep args in a sep function if needed) here!
-          this.tracker.onBuyerCommitted(event, _blockHeight);
+          
         } else {
           this.logger.warn(
             `TradeStatus.Committed | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newBuyerCommittedStatusIs.newStatus}/${newBuyerCommittedStatusIs.currentStatus} | block: #${_blockHeight}`,
