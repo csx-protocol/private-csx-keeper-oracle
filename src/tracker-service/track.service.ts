@@ -11,7 +11,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class TrackService {
-  private readonly logger = new Logger(TrackService.name);
+  private readonly logger = new Logger(TrackService.name);54
   private trackedItems: TrackedItem[];
   private cronEnabled = false;
   constructor(
@@ -29,7 +29,13 @@ export class TrackService {
   }
 
   // To start tracking an item
-   async trackItem(originId: string, destinationId: string, assetId: string): Promise<void> {
+
+  // Pull similar items based only on name, then take all their assetids and pull their actions.link url, construct url and then pull float details.
+
+  // or nah, just look if destination inventory has an item with the same name, if so, check them all for float details, and if they match float details with sold item, then add to similarItemsCount.
+  // then on period check, dont remember count, just check if item found with same market hash name, if so, check its float details and compare. if match, trade success.
+  // float details = floatvalue, paintseed, paintindex
+   async trackItem(originId: string, destinationId: string, assetId: string, _floatValue: number, _paintSeed: number, _paintIndex: number): Promise<void> {
     const originInventory = await this.getInventory(originId);
     const item = originInventory.find((item: { assetid: string; }) => item.assetid === assetId);
 
@@ -38,9 +44,9 @@ export class TrackService {
       
       const similarItemsCount = targetInventory.filter((targetItem: targetItem) =>
         targetItem.market_hash_name === item.market_hash_name &&
-        targetItem.floatvalue === item.floatvalue &&
-        targetItem.paintseed === item.paintseed &&
-        targetItem.paintindex === item.paintindex
+        targetItem.floatvalue === _floatValue &&
+        targetItem.paintseed === _paintSeed &&
+        targetItem.paintindex === _paintIndex
       ).length;
 
       const trackedItem = this.trackedItemsRepository.create({
@@ -49,9 +55,9 @@ export class TrackService {
         assetId,
         market_hash_name: item.market_hash_name,
         details: {
-          floatValue: item.floatvalue,
-          paintSeed: item.paintseed,
-          paintIndex: item.paintindex,
+          floatValue: _floatValue,
+          paintSeed: _paintSeed,
+          paintIndex: _paintIndex,
         },
         similarItemsCount,
       });
