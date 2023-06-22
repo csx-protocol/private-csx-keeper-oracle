@@ -94,15 +94,14 @@ export class TrackerService {
     // If not, cancel trade and refund.
 
     //
-    const [isValid, assetId] = await this.validateItem(event.contractAddress);
+    const [isValid, assetId, validationResults] = await this.validateItem(event.contractAddress);
+    console.log('Validation Results', validationResults);
+    
     if (!isValid) {
-      // Cancel trade and refund.
-      // return;
+      this.logger.warn('Item is not valid, cancel trade and refund');
+      // TODO: Cancel Trade and Refund call here.
+      return;
     }
-
-    // data: '225482466+EP2Wgs2R||225482469+lKCMUg5E||0xd336c5e997055bce143060745dfa2a5e161c5681||1489077140000000000'
-    // 225482466 is the seller partnerId we need to convert to Steamid64
-    // 225482469 is the buyer partnerId we need to conver to Steamid64
 
     const data = event.data.split('||');
     const sellerPartnerId = data[0].split('+')[0];
@@ -114,11 +113,21 @@ export class TrackerService {
     const sellerSteamId64 = `7656119${sellerPartnerIdInt + 7960265728}`;
     const buyerSteamId64 = `7656119${buyerPartnerIdInt + 7960265728}`;
 
+    this.trackService.trackItem(
+      sellerSteamId64,
+      buyerSteamId64,
+      assetId,
+      validationResults.floatValue.steamValue,
+      validationResults.paintSeed.steamValue,
+      validationResults.paintIndex.steamValue,
+    );
+
     // trackItem(originId: string, destinationId: string, assetId: string): Promise<void>
     // originId = seller SteamId64
     // destinationId = buyer SteamId64
     // assetId = item's assetId in seller inventory
-    this.trackService.trackItem(sellerSteamId64, buyerSteamId64, assetId);
+    
+    
 
     // TODO: Implement method
 
@@ -200,16 +209,15 @@ export class TrackerService {
    * Validates if the item info from the contract is the same as the item info from the inspect url.
    */
 
-  async validateItem(contractAddress: string): Promise<[boolean, string]> {
+  async validateItem(contractAddress: string): Promise<[boolean, string, ValidationResults]> {
     try {
       const contract = await this._getFactoryContract();
   
-      const results = await contract.methods.getTradeDetailsByAddress(contractAddress).call({ from: this.walletService.wallet.myAccount });
-      
-      const onChainInfo = this._extractChainItemInfo(results.skinInfo, results.assetId);
+      const chainResults = await contract.methods.getTradeDetailsByAddress(contractAddress).call({ from: this.walletService.wallet.myAccount });
+      const onChainInfo = this._extractChainItemInfo(chainResults.skinInfo, chainResults.assetId);
   
-      const fetchedData = await this.floatService.getFloat(results.inspectLink);
-      const steamInfo = this._extractSteamItemInfo(fetchedData.data.iteminfo);
+      const steamResults = await this.floatService.getFloat(chainResults.inspectLink);
+      const steamInfo = this._extractSteamItemInfo(steamResults.data.iteminfo);
   
       const validationResults = this._validateItemInfo(onChainInfo, steamInfo);
   
@@ -218,7 +226,7 @@ export class TrackerService {
       const isValid = Object.values(validationResults).every((result: ValidationResult) => result.isEqual);
   
       console.log(`Item validation result: ${isValid ? 'Valid' : 'Invalid'}`);
-      return [isValid, results.assetId];
+      return [isValid, chainResults.assetId, validationResults];
     } catch (error) {
       console.error(`Failed to validate item ${contractAddress}`, error);
     }
