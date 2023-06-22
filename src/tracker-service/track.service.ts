@@ -44,9 +44,9 @@ export class TrackService {
       
       const similarItemsCount = targetInventory.filter((targetItem: targetItem) =>
         targetItem.market_hash_name === item.market_hash_name &&
-        targetItem.floatvalue === _floatValue &&
-        targetItem.paintseed === _paintSeed &&
-        targetItem.paintindex === _paintIndex
+        targetItem.floatValue === _floatValue &&
+        targetItem.paintSeed === _paintSeed &&
+        targetItem.paintIndex === _paintIndex
       ).length;
 
       const trackedItem = this.trackedItemsRepository.create({
@@ -87,9 +87,9 @@ export class TrackService {
       
       const similarItemsInTargetInventory = targetInventory.filter((targetItem: targetItem) =>
         targetItem.market_hash_name === trackedItem.market_hash_name &&
-        targetItem.floatvalue === trackedItem.details.floatValue &&
-        targetItem.paintseed === trackedItem.details.paintSeed &&
-        targetItem.paintindex === trackedItem.details.paintIndex
+        targetItem.floatValue === trackedItem.details.floatValue &&
+        targetItem.paintSeed === trackedItem.details.paintSeed &&
+        targetItem.paintIndex === trackedItem.details.paintIndex
       );
 
       if (similarItemsInTargetInventory.length > trackedItem.similarItemsCount) {
@@ -158,8 +158,8 @@ export class TrackService {
 
 type targetItem = {
     market_hash_name: string;
-    floatvalue: number;
-    paintseed: number;
-    paintindex: number;
+    floatValue: number;
+    paintSeed: number;
+    paintIndex: number;
 };
   
