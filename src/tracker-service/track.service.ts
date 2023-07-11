@@ -69,7 +69,8 @@ export class TrackService {
 
       this.logger.log(`Start tracking item ${assetId} from ${originId} to ${destinationId}`);
     } else {
-      throw new Error(`No item with assetId ${assetId} found in the inventory.`);
+      console.warn(`No item with assetId ${assetId} found in the inventory, no tracking stored.`);
+      // TODO: delist the item from the csx-market and refund buyer
     }
   }
 
