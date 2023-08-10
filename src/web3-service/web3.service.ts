@@ -196,11 +196,13 @@ export class Web3Service implements OnModuleInit {
          */
         const newBuyerCommittedStatusIs = await this.db.isStatusHigherThanKnown(
           event,
-        );this.tracker.onBuyerCommitted(event, _blockHeight);
+        );        
+        
+        //this.tracker.onBuyerCommitted(event, _blockHeight); // TODO: remove this line when item tracker is ready
         if (newBuyerCommittedStatusIs.higher) {
           await this.__onBuyerCommittedDatabaseAction(event, _blockHeight);
-          //Call Item Tracker (prep args in a sep function if needed) here!
-          
+          // TODO: uncomment this line when item tracker is ready
+          this.tracker.onBuyerCommitted(event, _blockHeight);
         } else {
           this.logger.warn(
             `TradeStatus.Committed | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newBuyerCommittedStatusIs.newStatus}/${newBuyerCommittedStatusIs.currentStatus} | block: #${_blockHeight}`,
