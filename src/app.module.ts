@@ -4,7 +4,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ContractEntity } from './database/entities/contract-entity/contract.entity';
 import { StatusHistoryEntity } from './database/entities/status-history/status-history.entity';
 import { DatabaseService } from './database/database/database.service';
@@ -42,13 +41,12 @@ import { TrackedItem } from './database/entities/tracked-items/tracked-items.ent
   ],
   controllers: [AppController],
   providers: [
-    AppService,
-    WalletService,
-    Web3Service,
     TrackerService,
     TrackService,
-    DatabaseService,
     FloatApiService,
+    Web3Service,
+    WalletService,
+    DatabaseService,
   ],
 })
 export class AppModule {}
