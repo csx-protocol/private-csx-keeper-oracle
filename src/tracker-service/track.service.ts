@@ -87,7 +87,7 @@ export class TrackService {
       );
     } else {
       console.warn(
-        `No item with assetId ${assetId} found in the inventory, no tracking stored.`,
+        `No item with assetId ${assetId} found in the steam inventory, no tracking stored.`,
       );
       // TODO: delist the item from the csx-market and refund buyer
     }
