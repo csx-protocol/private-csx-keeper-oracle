@@ -228,7 +228,8 @@ export class TrackerService {
       console.log(`Item validation result: ${isValid ? 'Valid' : 'Invalid'}`);
       return [isValid, chainResults.assetId, validationResults];
     } catch (error) {
-      console.error(`Failed to validate item ${contractAddress}`, error);
+      console.warn(`Failed to validate item ${contractAddress} trying again`, error);
+      this.validateItem(contractAddress);
     }
   }
   
