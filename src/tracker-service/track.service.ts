@@ -21,7 +21,7 @@ import { FloatApiService } from '../float-api/float-api.service';
 @Injectable()
 export class TrackService {
   private readonly logger = new Logger(TrackService.name);
-  private trackedItems: TrackedItem[];
+  private trackedItems: TrackedItem[] = [];
   private cronEnabled = false;
   constructor(
     private readonly httpService: HttpService,
@@ -49,6 +49,7 @@ export class TrackService {
     _paintIndex: number,
   ): Promise<void> {
     const originInventory = await this._getInventory(originId);
+    
     const item = originInventory.find(
       (item: { assetid: string }) => item.assetid === assetId,
     );
