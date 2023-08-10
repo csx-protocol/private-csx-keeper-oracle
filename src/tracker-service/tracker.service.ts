@@ -6,7 +6,7 @@ import { catchError, firstValueFrom /*of*/ } from 'rxjs';
 import { AxiosError } from 'axios';
 import { FloatApiService } from '../float-api/float-api.service';
 import { WalletService } from '../web3-service/wallet.service';
-import { environment } from 'src/web3-service/environment';
+import { environment as envWeb3 } from '../web3-service/environment';
 import { TrackService } from './track.service';
 
 @Injectable()
@@ -273,8 +273,8 @@ export class TrackerService {
   
   private async _getFactoryContract() {
     return this.walletService.wallet.connectContract(
-      environment.contractFactory.address,
-      environment.contractFactory.abi,
+      envWeb3.contractFactory.address,
+      envWeb3.contractFactory.abi,
     );
   }
 }
