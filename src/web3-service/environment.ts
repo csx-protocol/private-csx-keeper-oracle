@@ -16,7 +16,7 @@ export const environment = {
     rpcUrl: process.env.PROVIDER,
   },
   contractFactory: {
-    address: '0x3CF9a484d0e8C2Ee145E707Bc300D9E6c5EA1D29',
+    address: '0x9c791ff578c458449032e830BaCff4956fDAe6c7',
     abi: [
       {
         "inputs": [
@@ -1047,19 +1047,6 @@ export const environment = {
             "internalType": "string",
             "name": "",
             "type": "string"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "disputedStatus",
-        "outputs": [
-          {
-            "internalType": "enum TradeStatus",
-            "name": "",
-            "type": "uint8"
           }
         ],
         "stateMutability": "view",
