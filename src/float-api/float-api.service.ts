@@ -21,7 +21,7 @@ export class FloatApiService {
         if (error.status === 500) {
           return of(ErrorMessages[ErrorCodes.InternalError]);
         } else {
-          this.logger.error('Float-API', error);
+          this.logger.error('Float-API ERROR', error);
           if (error.error.code as number) {
             const number: number = error.error.code;
             return of(ErrorMessages[number as ErrorCodes]);
