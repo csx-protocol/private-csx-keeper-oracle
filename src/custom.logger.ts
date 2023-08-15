@@ -19,27 +19,28 @@ export class CustomLogger extends ConsoleLogger implements LoggerService {
   }
 
   log(message: any, context?: string) {
-    super.log(message, context); // NestJS's ConsoleLogger will manage console output with default coloring
-    this.winstonLogger.info(message);
+    super.log(message, context);
+    this.winstonLogger.info(message, { context });
   }
 
   error(message: any, trace?: string, context?: string) {
     super.error(message, trace, context);
-    this.winstonLogger.error(message);
+    // Logging both message and trace
+    this.winstonLogger.error(`${message} ${trace}`, { context });
   }
 
   warn(message: any, context?: string) {
     super.warn(message, context);
-    this.winstonLogger.warn(message);
+    this.winstonLogger.warn(message, { context });
   }
 
   debug(message: any, context?: string) {
     super.debug(message, context);
-    this.winstonLogger.debug(message);
+    this.winstonLogger.debug(message, { context });
   }
 
   verbose(message: any, context?: string) {
     super.verbose(message, context);
-    this.winstonLogger.verbose(message);
+    this.winstonLogger.verbose(message, { context });
   }
 }

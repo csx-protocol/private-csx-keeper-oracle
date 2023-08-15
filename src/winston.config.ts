@@ -6,7 +6,7 @@ export const winstonConfig = {
   levels: winston.config.npm.levels,
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.colorize(),
+    //winston.format.colorize(),
     nestWinstonModuleUtilities.format.nestLike(),
   ),
   transports: [
