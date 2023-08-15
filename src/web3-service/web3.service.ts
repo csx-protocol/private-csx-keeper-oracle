@@ -385,6 +385,55 @@ export class Web3Service implements OnModuleInit {
    * 9 - Clawbacked :: __onClawbackedDatabaseAction()
    */
 
+  /** Contract Function's Event Data
+   * 0 - ForSale ::
+   *      itemMarketName,
+   *      assetId,
+   *      tradeUrlPartner,
+   *      TradeUrlToken,
+   *      FloatValues,
+   *      weiPriceStringed
+   * 
+   * 1 -  SellerCancelled ::
+   *      weiPrice
+   * 
+   * 2 - BuyerCommitted :: 
+   *      sellerTradeUrl.partner,
+   *      sellerTradeUrl.token,
+   *      _buyerTradeUrl.partner,
+   *      _buyerTradeUrl.token,
+   *      buyerAddress,
+   *      weiPrice
+   * 
+   * 3 - BuyerCancelled ::
+   *      "BU_DEFAULT"
+   * 
+   * 4 - SellerCommitted ::
+   *      ""
+   * 
+   * 5 - SellerCancelledAfterBuyerCommitted ::
+   *      "SE_DEFAULT"
+   * 
+   * 6 - Completed ::
+   *       From: buyerConfirmReceived()
+   *          weiPrice,
+   *          "MANUAL"
+   *       From: sellerConfirmsTrade()
+   *          weiPrice,
+   *       From: keeperNodeConfirmsTrade(boolean)
+   *          > True: weiPrice
+   *          > False: "KO_DEFAULT"
+   * 
+   * 7 - Disputed ::
+   *      _Complaint"
+   * 
+   * 8 - Resolved ::
+   *      ""
+   * 
+   * 9 - Clawbacked ::
+   *      ""
+   */
+
   private async __onContractCreation(event: any, _blockHeight: number) {
     const dataArray = event.data.split('||');
 
