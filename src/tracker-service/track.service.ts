@@ -4,12 +4,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   catchError,
-  firstValueFrom,
-  expand,
-  delay,
-  take,
-  EMPTY,
-  Observable,
+  firstValueFrom
 } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -40,6 +35,26 @@ export class TrackService {
   }
 
   // To track an item
+  // TODO: Re-arrange flow of tracking items
+  // So we first check seller/origin inventory first to see if the item is still there
+  // but we need to do it a bit differently because the trackItem function is called
+  // right now when the buyer has committed, so we need to check the seller inventory
+  // like we do but in another function, and then we need to track the item, by assetId,
+  // market_hash_name, floatValue, paintSeed, paintIndex. Not once the seller has committed,
+  // we will check the seller inventory again in the cron-job, and if the item is not there
+  // anymore, then we need to track the buyer inventory and check if the similar items count.
+  // All this flow should be probably divided into three functions, one per status change.
+  // There is 3 status changes in this flow.
+
+  // when the buyer purchases the item, we need to check the seller inventory again,
+  // if the item is still there, we need to check the buyer inventory to see if similar items
+  // are there, if they are, we need to store that count.
+
+  // at this stage we need to interval the seller inventory to keep track when the item
+  // is not in the inventory anymore, when that happens, we need to check the buyer inventory
+  // and validate the similar items count, if it's one more in similar items count, we need
+  // to release the item the funds to the seller.
+
   public async trackItem(
     originId: string,
     destinationId: string,
@@ -49,13 +64,12 @@ export class TrackService {
     _paintIndex: number,
   ): Promise<void> {
     const originInventory = await this._getInventory(originId);
-    
+
     const item = originInventory.find(
       (item: { assetid: string }) => item.assetid === assetId,
     );
 
     if (item) {
-
       const similarItemsCount = await this._getSimilarItemsCount(
         destinationId,
         item.market_hash_name,
@@ -105,38 +119,52 @@ export class TrackService {
 
     this.logger.log(`Checking ${this.trackedItems.length} tracked items.`);
 
+    let count = 0;
     for (const trackedItem of this.trackedItems) {
-
-      const similarItemsInTargetInventory = await this._getSimilarItemsCount(
-        trackedItem.destinationId,
-        trackedItem.market_hash_name,
-        trackedItem.details.floatValue,
-        trackedItem.details.paintSeed,
-        trackedItem.details.paintIndex,
-      );
-
-      if (similarItemsInTargetInventory > trackedItem.similarItemsCount) {
-        this.logger.log(
-          `Item ${trackedItem.id} has moved from ${trackedItem.originId} to ${trackedItem.destinationId}.`,
+      try {
+        count++;
+        this.logger.warn(
+          `Checking item ${count} out of ${this.trackedItems.length} tracked items.`,
         );
 
+        this.logger.log(
+          `checking tracked item ${trackedItem.id} ${trackedItem.originId} ${trackedItem.destinationId} ${trackedItem.market_hash_name} ${trackedItem.details.floatValue} ${trackedItem.details.paintSeed} ${trackedItem.details.paintIndex}`,
+        );
 
-        // Release the item from the csx-market
+        const similarItemsInTargetInventory = await this._getSimilarItemsCount(
+          trackedItem.destinationId,
+          trackedItem.market_hash_name,
+          trackedItem.details.floatValue,
+          trackedItem.details.paintSeed,
+          trackedItem.details.paintIndex,
+        );
 
+        if (similarItemsInTargetInventory > trackedItem.similarItemsCount) {
+          this.logger.log(
+            `Item ${trackedItem.id} has moved from ${trackedItem.originId} to ${trackedItem.destinationId}.`,
+          );
 
-        // // Remove the item from the in-memory list
-        // this.trackedItems = this.trackedItems.filter(
-        //   (item) => item.id !== trackedItem.id,
-        // );
+          // Release the item from the csx-market
 
-        // // Remove the item from the database
-        // await this.trackedItemsRepository.remove(trackedItem);
+          // // Remove the item from the in-memory list
+          // this.trackedItems = this.trackedItems.filter(
+          //   (item) => item.id !== trackedItem.id,
+          // );
+
+          // // Remove the item from the database
+          // await this.trackedItemsRepository.remove(trackedItem);
+        }
+      } catch (error) {
+        this.logger.error(`Error processing tracked item with ID: ${trackedItem.id}`, error.message);
       }
     }
+    this.logger.warn('Done checking items.');
     this.isCheckingItems = false;
   }
 
   // To get the inventory of a user
+  // Code 403: Private inventory
+
   private async _getInventory(_steamId64: string): Promise<any> {
     try {
       const MAX_RETRIES = 3; // Maximum retry count
@@ -150,10 +178,13 @@ export class TrackService {
             )}`,
           )
           .pipe(
-            retryWithDelayAndLimit(RETRY_DELAY_MS, MAX_RETRIES),
+            //retryWithDelayAndLimit(RETRY_DELAY_MS, MAX_RETRIES),
             catchError((error: AxiosError) => {
               this.logger.error(error.response.data);
-              throw 'An error happened!';
+              // If the error is not catched, turn of the isCheckingItems flag
+              // this.logger.warn('Setting isCheckingItems to false.');
+              // this.isCheckingItems = false;
+              throw 'An error happened in _getInventory!';
             }),
           ),
       );
@@ -213,7 +244,14 @@ export class TrackService {
         }
 
         const inspectLink = `steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20S${destinationId}A${item.assetid}D${dValue[1]}`;
-        const fetchFloat = await this.floatService.getFloat(inspectLink);
+        const fetchFloat = await this.floatService
+          .getFloat(inspectLink)
+          .catch((error) => {
+            this.logger.error('Error in _getSimilarItemsCount: ', error);
+            // If the error is not catched, turn of the isCheckingItems flag
+            // this.logger.warn('Setting isCheckingItems to false.');
+            // this.isCheckingItems = false;
+          });
         const floatResults = fetchFloat.data.iteminfo;
 
         // Check if the float details of the current item match the provided details
@@ -247,21 +285,3 @@ type targetItem = {
   paintIndex: number;
 };
 
-// A custom operator for retries
-function retryWithDelayAndLimit<T>(delayMs: number, maxRetries: number) {
-  return (source: Observable<T>) => {
-    return source.pipe(
-      expand((val: T, i: number) => {
-        if (i < maxRetries) {
-          return source.pipe(delay(delayMs));
-        } else {
-          return EMPTY;
-        }
-      }),
-      take(maxRetries + 1),
-      catchError((error: any) => {
-        throw error;
-      }),
-    );
-  };
-}
