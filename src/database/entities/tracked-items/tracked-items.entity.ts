@@ -1,5 +1,15 @@
 /* eslint-disable prettier/prettier */
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn
+} from 'typeorm';
+
+export enum ItemState {
+  TRACKING_SELLER = 'TRACKING_SELLER',
+  TRACKING_BUYER = 'TRACKING_BUYER',
+  COMPLETED = 'COMPLETED',
+}
 
 @Entity('tracked_items')
 export class TrackedItem {
@@ -27,4 +37,14 @@ export class TrackedItem {
 
   @Column()
   similarItemsCount: number;
+
+  @Column({
+    type: 'enum',
+    enum: ItemState,
+    default: ItemState.TRACKING_SELLER,
+  })
+  state: ItemState;
+
+  @Column()
+  contractAddress: string;
 }
