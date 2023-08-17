@@ -22,6 +22,13 @@ export class ContractEntity {
   @Column()
   itemMarketName: string;
 
+  @Column('jsonb')
+  details: {
+    floatValue: number;
+    paintSeed: number;
+    paintIndex: number;
+  };
+
   @Column()
   status: string;
 
