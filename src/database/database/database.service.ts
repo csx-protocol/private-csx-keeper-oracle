@@ -49,6 +49,29 @@ export class DatabaseService {
     }
   }
 
+  // find by contractAddress
+
+  async findByContractAddress(
+    contractAddress: string,
+  ): Promise<ContractEntity> {
+    try {
+      const findOneOptions: FindOneOptions<ContractEntity> = {
+        where: {
+          contractAddress: contractAddress,
+        },
+      };
+
+      const existingData = await this.blockDataRepository.findOne(
+        findOneOptions,
+      );
+
+      return existingData;
+    } catch (error) {
+      this.logger.error(error);
+      return null;
+    }
+  }
+
   async fetchLastKnownBlock(): Promise<number> {
     try {
       const lastData = await this.blockDataRepository
