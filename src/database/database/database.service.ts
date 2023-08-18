@@ -81,7 +81,9 @@ export class DatabaseService {
 
       return lastData.lastBlockHeight;
     } catch (error) {
-      console.warn(error, 'will continue from block 0:');
+      this.logger.warn(
+        'There is no known blockHeight, will continue from block 0:',
+      );
       return 0;
     }
   }
