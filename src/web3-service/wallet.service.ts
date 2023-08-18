@@ -11,4 +11,16 @@ export class WalletService {
     this.wallet = new Wallet(environment.wallet.key, environment.wallet.rpcUrl);
     this.logger.log('WalletService dependencies injected');
   }
+
+  connectTradeContract(address: string) {
+    return this.wallet.connectContract(
+      address,
+      environment.tradeContract.abi
+    );
+  }
+
+  async confirmTrade(contractAddress: any, veridict: boolean) {
+    const contract = await this.connectTradeContract(contractAddress);
+    return await contract.methods.keeperNodeConfirmsTrade(veridict).send({ from: this.wallet.myAccount });
+  }
 }
