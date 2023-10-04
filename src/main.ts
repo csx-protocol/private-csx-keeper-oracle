@@ -9,6 +9,6 @@ async function bootstrap() {
     //logger: WinstonModule.createLogger(winstonConfig), To use only Winston, don't forget to uncomment transport in winston config.
     logger: new CustomLogger(),
   });
-  await app.listen(3001);
+  await app.listen(3008);
 }
 bootstrap();
