@@ -19,8 +19,18 @@ export class WalletService {
     );
   }
 
-  async confirmTrade(contractAddress: any, veridict: boolean) {
+  async confirmTrade(contractAddress: any, isTradeMade: boolean, message: string) {
     const contract = await this.connectTradeContract(contractAddress);
-    return await contract.methods.keeperNodeConfirmsTrade(veridict).send({ from: this.wallet.myAccount });
+    return await contract.methods.keeperNodeConfirmsTrade(isTradeMade, message).send({ from: this.wallet.myAccount });
+  }
+
+  async getTradeStatus(contractAddress: any) {
+    const contract = await this.connectTradeContract(contractAddress);
+    return await contract.methods.status().call();
+  }
+
+  async getfinalityResult(contractAddress: any) {
+    const contract = await this.connectTradeContract(contractAddress);
+    return await contract.methods.finalityResult().call();
   }
 }
