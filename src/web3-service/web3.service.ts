@@ -16,7 +16,22 @@ export class Web3Service implements OnModuleInit {
     private db: DatabaseService,
     private tracker: TrackerService,
     private signer: WalletService,
-  ) {}
+  ) {
+    this.createNewTradeEntry = this.createNewTradeEntry.bind(this);
+    this.unifiedDatabaseAction = this.unifiedDatabaseAction.bind(this);
+
+    this.handleForSale = this.handleForSale.bind(this);
+    this.handleSellerCancelled = this.handleSellerCancelled.bind(this);
+    this.handleBuyerCommitted = this.handleBuyerCommitted.bind(this);
+    this.handleBuyerCancelled = this.handleBuyerCancelled.bind(this);
+    this.handleSellerCommitted = this.handleSellerCommitted.bind(this);
+    this.handleSellerCancelledAfterBuyerCommitted =
+      this.handleSellerCancelledAfterBuyerCommitted.bind(this);
+    this.handleCompleted = this.handleCompleted.bind(this);
+    this.handleDisputed = this.handleDisputed.bind(this);
+    this.handleResolved = this.handleResolved.bind(this);
+    this.handleClawbacked = this.handleClawbacked.bind(this);
+  }
 
   /** Genereic functions  **/
 
@@ -62,7 +77,6 @@ export class Web3Service implements OnModuleInit {
           for (const _topic of log.topics) {
             switch (_topic) {
               case ContractFactoryTopics.statusChange:
-                //console.log(`Processing status change topic..`);
                 await this._processStatusChangeTopic(log, log.blockNumber);
                 break;
               default:
@@ -90,7 +104,7 @@ export class Web3Service implements OnModuleInit {
         }
       })
       .catch((error) => {
-        console.log('error!', error);
+        this.logger.error(`Error in warmupContractFactoryTopics:`, error);
       });
   }
 
@@ -129,312 +143,137 @@ export class Web3Service implements OnModuleInit {
   }
 
   private async _processStatusChangeTopic(log: any, _blockHeight: number) {
-    return new Promise<void>(async (resolve, reject) => {
-      try {
-        const statusChangeResult = this._decodeLog(
-          StatusChangeEventValues,
-          log,
-        );
-        //console.log('statusChangeResult', statusChangeResult);
-        await this._onStatusChange(statusChangeResult, _blockHeight);
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    });
+    try {
+      const statusChangeResult = this._decodeLog(StatusChangeEventValues, log);
+      await this._onStatusChange(statusChangeResult, _blockHeight);
+    } catch (error) {
+      this.logger.error(`Error in _processStatusChangeTopic: ${log} | ${error}` );
+      throw error;
+    }
   }
 
   private _decodeLog(any: any[], log: any): any {
     return this.signer.wallet.web3.eth.abi.decodeLog(any, log.data, log.topics);
   }
 
-  /** Switch Status Change **/
+  /** Switch Status Change Event
+   * Handles the status change event
+   * @param event 
+   * @param _blockHeight 
+   */
 
   private async _onStatusChange(event: any, _blockHeight: number) {
-    //... do something with the event
-    switch (event.newStatus) {
-      case TradeStatus.ForSale:
-        const newForSaleStatusIs = await this.db.isStatusHigherThanKnown(event);
-        if (newForSaleStatusIs.higher) {
-          await this.__onContractCreation(event, _blockHeight);
-        } else {
-          this.logger.warn(
-            `TradeStatus.ForSale | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newForSaleStatusIs.newStatus}/${newForSaleStatusIs.currentStatus} | block: #${_blockHeight}`,
-          );
-        }
-        break;
+    const statusHandlers: {
+      [key in TradeStatus]?: (
+        event: any,
+        _blockHeight: number,
+      ) => Promise<void>;
+    } = {
+      [TradeStatus.ForSale]: this.logHandler(
+        this.handleForSale,
+        'TradeStatus.ForSale',
+      ),
+      [TradeStatus.SellerCancelled]: this.logHandler(
+        this.handleSellerCancelled,
+        'TradeStatus.SellerCancelled',
+      ),
+      [TradeStatus.BuyerCommitted]: this.logHandler(
+        this.handleBuyerCommitted,
+        'TradeStatus.BuyerCommitted',
+      ),
+      [TradeStatus.BuyerCancelled]: this.logHandler(
+        this.handleBuyerCancelled,
+        'TradeStatus.BuyerCancelled',
+      ),
+      [TradeStatus.SellerCommitted]: this.logHandler(
+        this.handleSellerCommitted,
+        'TradeStatus.SellerCommitted',
+      ),
+      [TradeStatus.SellerCancelledAfterBuyerCommitted]: this.logHandler(
+        this.handleSellerCancelledAfterBuyerCommitted,
+        'TradeStatus.SellerCancelledAfterBuyerCommitted',
+      ),
+      [TradeStatus.Completed]: this.logHandler(
+        this.handleCompleted,
+        'TradeStatus.Completed',
+      ),
+      [TradeStatus.Disputed]: this.logHandler(
+        this.handleDisputed,
+        'TradeStatus.Disputed',
+      ),
+      [TradeStatus.Resolved]: this.logHandler(
+        this.handleResolved,
+        'TradeStatus.Resolved',
+      ),
+      [TradeStatus.Clawbacked]: this.logHandler(
+        this.handleClawbacked,
+        'TradeStatus.Clawbacked',
+      ),
+    };
 
-      case TradeStatus.SellerCancelled:
-        /**
-       * If status is higher than status in db: 
-       change status to 1 in db
-        */
-        const newSellerCancelledStatusIs =
-          await this.db.isStatusHigherThanKnown(event);
+    const handler = statusHandlers[event.newStatus];
 
-        if (newSellerCancelledStatusIs.higher) {
-          await this.__onSellerCancelledDatabaseAction(event, _blockHeight);
-        } else {
-          this.logger.warn(
-            `TradeStatus.SellerCancelled | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newSellerCancelledStatusIs.newStatus}/${newSellerCancelledStatusIs.currentStatus} | block: #${_blockHeight}`,
-          );
-        }
-        break;
-
-      case TradeStatus.BuyerCommitted:
-        /**
-         * If status is higher than status in db:
-         add buyerAddress
-         change status to 2 in db
-            then:
-            call item-tracker provide buyer/seller inv .> then calls:
-            onAction: const _contract = await this.wallet.connectContract(
-              <contractAddress>,
-              environment.tradeContract.abi,
-            ); <- maybe do from itemtracker the wallet tingy?
-            and logs it or do it on accepted?.
-         */
-        const newBuyerCommittedStatusIs = await this.db.isStatusHigherThanKnown(
-          event,
-        );        
-        
-        //this.tracker.onBuyerCommitted(event, _blockHeight); // TODO: remove this line when item tracker is ready
-        if (newBuyerCommittedStatusIs.higher) {
-          await this.__onBuyerCommittedDatabaseAction(event, _blockHeight);
-          // TODO: uncomment this line when item tracker is ready
-          this.tracker.onBuyerCommitted(event, _blockHeight);
-        } else {
-          this.logger.warn(
-            `TradeStatus.Committed | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newBuyerCommittedStatusIs.newStatus}/${newBuyerCommittedStatusIs.currentStatus} | block: #${_blockHeight}`,
-          );
-        }
-        break;
-
-      case TradeStatus.BuyerCancelled:
-        /**
-         * If status is higher than status in db:
-         * change status to 3 in db
-         * then:
-         * !close item specific tracker instance!? (if it exists)
-         * */
-        const newBuyerCancelledStatusIs = await this.db.isStatusHigherThanKnown(
-          event,
-        );
-        if (newBuyerCancelledStatusIs.higher) {
-          await this.__onBuyerCancelledDatabaseAction(event, _blockHeight);
-        } else {
-          this.logger.warn(
-            `TradeStatus.BuyerCancelled | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newBuyerCancelledStatusIs.newStatus}/${newBuyerCancelledStatusIs.currentStatus} | block: #${_blockHeight}`,
-          );
-        }
-        break;
-
-      case TradeStatus.SellerCommitted:
-        /**
-         * If status is higher than status in db:
-         change status to 4 in db
-            then:
-          check if item-tracker not already has a session for the trade?
-            if not, item-tracker run with emphasizes seller already sent item 
-              (is item still in seller inv? (punish behaviour(cant cuz cant verify count) and undo accept?))
-              (so no punish or revert trade if item not found in seller inv)
-              (only check if x item has arrived to buyer 
-                (check prev count vs now..etc 
-                  (has no prev data? 
-                    (do nothing 
-                      (3 day release claim for seller)))))
-            if it is, item-tracker run with emphasizes seller already sent item 
-                (is item still in seller inv? (punish behaviour and undo accept!))
-                or
-                (item is not in seller inv, (item is buyer now in buyer inv?))
-         */
-        const newSellerCommittedStatusIs =
-          await this.db.isStatusHigherThanKnown(event);
-
-        if (newSellerCommittedStatusIs.higher) {
-          await this.__onSellerCommittedDatabaseAction(event, _blockHeight);
-        } else {
-          this.logger.warn(
-            `TradeStatus.SellerCommitted | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newSellerCommittedStatusIs.newStatus}/${newSellerCommittedStatusIs.currentStatus} | block: #${_blockHeight}`,
-          );
-        }
-
-        break;
-
-      case TradeStatus.SellerCancelledAfterBuyerCommitted:
-        /**
-         * If status is higher than status in db:
-         * change status to 5 in db
-         * then:
-         * !close item specific tracker instance!? (if it exists)
-         * */
-        const newSellerCancelledAfterBuyerCommittedStatusIs =
-          await this.db.isStatusHigherThanKnown(event);
-
-        if (newSellerCancelledAfterBuyerCommittedStatusIs.higher) {
-          await this.__onSellerCancelledAfterBuyerCommittedDatabaseAction(
-            event,
-            _blockHeight,
-          );
-        } else {
-          this.logger.warn(
-            `TradeStatus.SellerCancelledAfterBuyerCommitted | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newSellerCancelledAfterBuyerCommittedStatusIs.newStatus}/${newSellerCancelledAfterBuyerCommittedStatusIs.currentStatus} | block: #${_blockHeight}`,
-          );
-        }
-
-        break;
-
-      case TradeStatus.Completed:
-        /**
-         * If status is higher than status in db:
-         change status to 6 in db
-              then:
-                !close item specific tracker instance!
-         */
-        const newCompletedStatusIs = await this.db.isStatusHigherThanKnown(
-          event,
-        );
-        if (newCompletedStatusIs.higher) {
-          await this.__onCompletedDatabaseAction(event, _blockHeight);
-        } else {
-          this.logger.warn(
-            `TradeStatus.Completed | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newCompletedStatusIs.newStatus}/${newCompletedStatusIs.currentStatus} | block: #${_blockHeight}`,
-          );
-        }
-
-        break;
-
-      case TradeStatus.Disputed:
-        /**
-         * If status is higher than status in db:
-         * change status to 7 in db
-         * then:
-         * !close item specific tracker instance!? (if it exists)
-         * */
-        const newDisputedStatusIs = await this.db.isStatusHigherThanKnown(
-          event,
-        );
-        if (newDisputedStatusIs.higher) {
-          await this.__onDisputedDatabaseAction(event, _blockHeight);
-        } else {
-          this.logger.warn(
-            `TradeStatus.Disputed | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newDisputedStatusIs.newStatus}/${newDisputedStatusIs.currentStatus} | block: #${_blockHeight}`,
-          );
-        }
-
-        break;
-
-      case TradeStatus.Resolved:
-        /**
-         * If status is higher than status in db:
-         * change status to 8 in db
-         * then:
-         * !close item specific tracker instance!? (if it exists)
-         * */
-        const newResolvedStatusIs = await this.db.isStatusHigherThanKnown(
-          event,
-        );
-
-        if (newResolvedStatusIs.higher) {
-          await this.__onResolvedDatabaseAction(event, _blockHeight);
-        } else {
-          this.logger.warn(
-            `TradeStatus.Resolved | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newResolvedStatusIs.newStatus}/${newResolvedStatusIs.currentStatus} | block: #${_blockHeight}`,
-          );
-        }
-
-        break;
-
-      case TradeStatus.Clawbacked:
-        /**
-         * If status is higher than status in db:
-         * change status to 9 in db
-         * then:
-         * !close item specific tracker instance!? (if it exists)
-         * */
-        const newClawbackedStatusIs = await this.db.isStatusHigherThanKnown(
-          event,
-        );
-
-        if (newClawbackedStatusIs.higher) {
-          await this.__onClawbackedDatabaseAction(event, _blockHeight);
-        } else {
-          this.logger.warn(
-            `TradeStatus.Clawbacked | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${newClawbackedStatusIs.newStatus}/${newClawbackedStatusIs.currentStatus} | block: #${_blockHeight}`,
-          );
-        }
-
-        break;
-
-      default:
-        console.error('status is unknown!', event.newStatus);
-        break;
+    if (handler) {
+      const statusIs = await this.db.isStatusHigherThanKnown(event);
+      if (statusIs.higher) {
+        await handler.call(this, event, _blockHeight);
+      } else {
+        this.logWarning(event, _blockHeight, event.newStatus, statusIs);
+      }
+    } else {
+      console.error('status is unknown!', event.newStatus);
     }
   }
 
-  /** onValid status changes
-   * 0 - ForSale :: __onContractCreation()
-   * 1 - SellerCancelled :: __onSellerCancelledDatabaseAction()
-   * 2 - BuyerCommitted :: __onBuyerCommittedDatabaseAction()
-   * 3 - BuyerCancelled :: __onBuyerCancelledDatabaseAction()
-   * 4 - SellerCommitted :: __onSellerCommittedDatabaseAction()
-   * 5 - SellerCancelledAfterBuyerCommitted :: __onSellerCancelledAfterBuyerCommittedDatabaseAction()
-   * 6 - Completed :: __onCompletedDatabaseAction()
-   * 7 - Disputed :: __onDisputedDatabaseAction()
-   * 8 - Resolved :: __onResolvedDatabaseAction()
-   * 9 - Clawbacked :: __onClawbackedDatabaseAction()
-   */
+  private logHandler(
+    fn: (event: any, _blockHeight: number) => Promise<any>,
+    logMessage: string,
+  ): (event: any, _blockHeight: number) => Promise<void> {
+    return async (event: any, _blockHeight: number) => {
+      const result = await fn(event, _blockHeight); 
+      
+      if (result && result.saved) {
+        this.logger.log(
+          `${logMessage} | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+        );
+      } else if (result) {
+        this.logger.warn(
+          `${logMessage} | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
+        );
+      }
+    };
+  }
 
-  /** Contract Function's Event Data
-   * 0 - ForSale ::
-   *      itemMarketName,
-   *      assetId,
-   *      tradeUrlPartner,
-   *      TradeUrlToken,
-   *      FloatValues,
-   *      weiPriceStringed
-   * 
-   * 1 -  SellerCancelled ::
-   *      weiPrice
-   * 
-   * 2 - BuyerCommitted :: 
-   *      sellerTradeUrl.partner,
-   *      sellerTradeUrl.token,
-   *      _buyerTradeUrl.partner,
-   *      _buyerTradeUrl.token,
-   *      buyerAddress,
-   *      weiPrice
-   * 
-   * 3 - BuyerCancelled ::
-   *      "BU_DEFAULT"
-   * 
-   * 4 - SellerCommitted ::
-   *      ""
-   * 
-   * 5 - SellerCancelledAfterBuyerCommitted ::
-   *      "SE_DEFAULT"
-   * 
-   * 6 - Completed ::
-   *       From: buyerConfirmReceived()
-   *          weiPrice,
-   *          "MANUAL"
-   *       From: sellerConfirmsTrade()
-   *          weiPrice,
-   *       From: keeperNodeConfirmsTrade(boolean)
-   *          > True: weiPrice
-   *          > False: "KO_DEFAULT"
-   * 
-   * 7 - Disputed ::
-   *      _Complaint"
-   * 
-   * 8 - Resolved ::
-   *      ""
-   * 
-   * 9 - Clawbacked ::
-   *      ""
-   */
+  private async unifiedDatabaseAction(
+    event: any,
+    _blockHeight: number,
+    newStatus: TradeStatus,
+    extraOptions: ExtraDataToUpdate = {},
+  ): Promise<{ saved: boolean }> {
+    return this.db.updateStatus(
+      event.contractAddress,
+      newStatus,
+      _blockHeight,
+      extraOptions,
+    );
+  }
 
-  private async __onContractCreation(event: any, _blockHeight: number) {
+  private logWarning(
+    event: any,
+    _blockHeight: number,
+    status: TradeStatus,
+    statusInfo: any,
+  ) {
+    this.logger.warn(
+      `${status} | Status Lower than or Equal to Known | ${event.contractAddress} | Status (new/old): ${statusInfo.newStatus}/${statusInfo.currentStatus} | block: #${_blockHeight}`,
+    );
+  }
+
+  private async createNewTradeEntry(event: any, _blockHeight: number) {
+    const [isValid, assetId, validationResults] =
+      await this.tracker.validateIsItemInfoAndInspectSame(
+        event.contractAddress,
+        );
     const dataArray = event.data.split('||');
 
     const newStore: ContractEntity = {
@@ -456,221 +295,94 @@ export class Web3Service implements OnModuleInit {
           blockHeight: _blockHeight,
         },
       ],
+      details: {
+        floatValue: validationResults.floatValue.onChainValue,
+        paintSeed: validationResults.paintSeed.onChainValue,
+        paintIndex: validationResults.paintIndex.onChainValue,
+      },
     };
 
     const result = await this.db.createOrReturn(newStore);
 
-    if (result.saved) {
-      this.logger.log(
-        `TradeStatus.Pending | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    } else {
-      this.logger.warn(
-        `TradeStatus.Pending | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
+    if (!isValid) {
+      const currentStatus: TradeStatus = await this.signer.getTradeStatus(event.contractAddress);
+      if(currentStatus != TradeStatus.Clawbacked && !result.saved){
+        this.logger.warn(`[${event.contractAddress}] Item invalid: ${assetId}`);
+        try {
+          this.signer.confirmTrade(event.contractAddress, false, 'INVALID_ITEM').then((res) => {
+            this.logger.warn(`[${event.contractAddress}] Made TX to clawback: ${res.transactionHash}`);  
+          }).catch((err) => {
+            this.logger.error(`Catch 1: [${event.contractAddress}] Error in clawback send call (status ${currentStatus}): ${err}`);
+          });
+        } catch (error) {
+          this.logger.error(`Catch 2: [${event.contractAddress}] Error in clawback send call (status ${currentStatus}): ${error}`);
+        } 
+      }          
     }
+
+    return result;
   }
 
-  private async __onSellerCancelledDatabaseAction(
-    event: any,
-    _blockHeight: number,
-  ) {
-    //... const dataArray = event.data.split('||');
-    console.log('__onSellerCancelled', event);
+  /** Handlers 
+   * @param event 
+   * @param _blockHeight 
+   * @returns database result
+   */
 
-    const result = await this.db.updateStatus(
-      event.contractAddress,
-      event.newStatus,
-      _blockHeight,
-    );
-
-    if (result.saved) {
-      this.logger.log(
-        `TradeStatus.SellerCancelled | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    } else {
-      this.logger.warn(
-        `TradeStatus.SellerCancelled | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    }
+  private async handleForSale(event: any, _blockHeight: number) {
+    return await this.createNewTradeEntry(event, _blockHeight);
   }
 
-  private async __onBuyerCommittedDatabaseAction(
-    event: any,
-    _blockHeight: number,
-  ) {
+  private async handleSellerCancelled(event: any, _blockHeight: number) {
+    return await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
+  }
+
+  private async handleBuyerCommitted(event: any, _blockHeight: number) {
     const dataArray = event.data.split('||');
-    // console.log('dataArray', dataArray);
     const _buyerTradeUrl = dataArray[1];
 
-    const extraOptions: ExtraDataToUpdate = {
+    const result = await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus, {
       buyerTradeUrl: _buyerTradeUrl,
-    };
+    });
 
-    const result = await this.db.updateStatus(
-      event.contractAddress,
-      event.newStatus,
-      _blockHeight,
-      extraOptions,
-    );
+    await this.tracker.onBuyerCommitted(event, _blockHeight);
 
-    if (result.saved) {
-      this.logger.log(
-        `TradeStatus.Committed | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-      // Simulate Item has been sent after 1 min (for testing) by calling contract to release funds to seller .
-      // console.log('releaseFundsToSeller in 1 minute from:', await this.wallet.web3signer.eth.getAccounts());
-      // setTimeout(async () => {
-      //   const _contract = await this.wallet.connectContract(
-      //     event.contractAddress,
-      //     environment.tradeContract.abi,
-      //   );
-      //   const acc = await this.wallet.web3signer.eth.getAccounts();
-      //   const _result = await _contract.methods.keeperNodeConfirmsTrade(true).send({
-      //     from: acc[0],
-      //   });
-      //   console.log('releaseFundsToSeller complete', _result);
-      // }, 60000);
-    } else {
-      this.logger.warn(
-        `TradeStatus.Committed | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    }
+    return result;
   }
 
-  private async __onBuyerCancelledDatabaseAction(
+  private async handleBuyerCancelled(event: any, _blockHeight: number) {
+    return await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
+  }
+
+  private async handleSellerCommitted(event: any, _blockHeight: number) {
+    const result = await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
+    await this.tracker.onSellerCommitted(event, _blockHeight);
+    return result;
+  }
+
+  private async handleSellerCancelledAfterBuyerCommitted(
     event: any,
     _blockHeight: number,
   ) {
-    const result = await this.db.updateStatus(
-      event.contractAddress,
-      event.newStatus,
-      _blockHeight,
-    );
-
-    if (result.saved) {
-      this.logger.log(
-        `TradeStatus.BuyerCancelled | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    } else {
-      this.logger.warn(
-        `TradeStatus.BuyerCancelled | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    }
+    return await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
   }
 
-  private async __onSellerCommittedDatabaseAction(
-    event: any,
-    _blockHeight: number,
-  ) {
-    const result = await this.db.updateStatus(
-      event.contractAddress,
-      event.newStatus,
-      _blockHeight,
-    );
-
-    if (result.saved) {
-      this.logger.log(
-        `TradeStatus.SellerConfirmed | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    } else {
-      this.logger.warn(
-        `TradeStatus.SellerConfirmed | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    }
+  private async handleCompleted(event: any, _blockHeight: number) {
+    const result = await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
+    await this.tracker.onCompleted(event, _blockHeight);
+    return result;
   }
 
-  private async __onSellerCancelledAfterBuyerCommittedDatabaseAction(
-    event: any,
-    _blockHeight: number,
-  ) {
-    const result = await this.db.updateStatus(
-      event.contractAddress,
-      event.newStatus,
-      _blockHeight,
-    );
-
-    if (result.saved) {
-      this.logger.log(
-        `TradeStatus.SellerCancelledAfterBuyerCommitted | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    } else {
-      this.logger.warn(
-        `TradeStatus.SellerCancelledAfterBuyerCommitted | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    }
+  private async handleDisputed(event: any, _blockHeight: number) {
+    return await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
   }
 
-  private async __onCompletedDatabaseAction(event: any, _blockHeight: number) {
-    const result = await this.db.updateStatus(
-      event.contractAddress,
-      event.newStatus,
-      _blockHeight,
-    );
-
-    if (result.saved) {
-      this.logger.log(
-        `TradeStatus.Completed | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    } else {
-      this.logger.warn(
-        `TradeStatus.Completed | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    }
+  private async handleResolved(event: any, _blockHeight: number) {
+    return await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
   }
 
-  private async __onDisputedDatabaseAction(event: any, _blockHeight: number) {
-    const result = await this.db.updateStatus(
-      event.contractAddress,
-      event.newStatus,
-      _blockHeight,
-    );
-
-    if (result.saved) {
-      this.logger.log(
-        `TradeStatus.Dispute | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    } else {
-      this.logger.warn(
-        `TradeStatus.Dispute | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    }
-  }
-
-  private async __onResolvedDatabaseAction(event: any, _blockHeight: number) {
-    const result = await this.db.updateStatus(
-      event.contractAddress,
-      event.newStatus,
-      _blockHeight,
-    );
-
-    if (result.saved) {
-      this.logger.log(
-        `TradeStatus.Resolved | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    } else {
-      this.logger.warn(
-        `TradeStatus.Resolved | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    }
-  }
-
-  private async __onClawbackedDatabaseAction(event: any, _blockHeight: number) {
-    const result = await this.db.updateStatus(
-      event.contractAddress,
-      event.newStatus,
-      _blockHeight,
-    );
-
-    if (result.saved) {
-      this.logger.log(
-        `TradeStatus.Clawbacked | Saved | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    } else {
-      this.logger.warn(
-        `TradeStatus.Clawbacked | Known | ${event.contractAddress} | BlockHeight: ${_blockHeight}`,
-      );
-    }
+  private async handleClawbacked(event: any, _blockHeight: number) {
+    return await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
   }
 
   /** Utils **/
