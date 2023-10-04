@@ -2,16 +2,17 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  catchError,
-  firstValueFrom
-} from 'rxjs';
+import { catchError, firstValueFrom, of } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TrackedItem } from '../database/entities/tracked-items/tracked-items.entity';
-import { AxiosError } from 'axios';
+import {
+  ItemState,
+  TrackedItem,
+} from '../database/entities/tracked-items/tracked-items.entity';
+import { AxiosError, AxiosResponse } from 'axios';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { FloatApiService } from '../float-api/float-api.service';
+import { WalletService } from '../web3-service/wallet.service';
 
 @Injectable()
 export class TrackService {
@@ -22,8 +23,9 @@ export class TrackService {
     private readonly httpService: HttpService,
     private readonly config: ConfigService,
     @InjectRepository(TrackedItem)
-    private trackedItemsRepository: Repository<TrackedItem>,
-    private floatService: FloatApiService,
+    private readonly trackedItemsRepository: Repository<TrackedItem>,
+    private readonly floatService: FloatApiService,
+    private readonly walletService: WalletService,
   ) {
     this._loadTrackedItems(); // Do this after web3 has been initialized up to the latest block.
   }
@@ -35,27 +37,8 @@ export class TrackService {
   }
 
   // To track an item
-  // TODO: Re-arrange flow of tracking items
-  // So we first check seller/origin inventory first to see if the item is still there
-  // but we need to do it a bit differently because the trackItem function is called
-  // right now when the buyer has committed, so we need to check the seller inventory
-  // like we do but in another function, and then we need to track the item, by assetId,
-  // market_hash_name, floatValue, paintSeed, paintIndex. Not once the seller has committed,
-  // we will check the seller inventory again in the cron-job, and if the item is not there
-  // anymore, then we need to track the buyer inventory and check if the similar items count.
-  // All this flow should be probably divided into three functions, one per status change.
-  // There is 3 status changes in this flow.
-
-  // when the buyer purchases the item, we need to check the seller inventory again,
-  // if the item is still there, we need to check the buyer inventory to see if similar items
-  // are there, if they are, we need to store that count.
-
-  // at this stage we need to interval the seller inventory to keep track when the item
-  // is not in the inventory anymore, when that happens, we need to check the buyer inventory
-  // and validate the similar items count, if it's one more in similar items count, we need
-  // to release the item the funds to the seller.
-
   public async trackItem(
+    contractAddress: string,
     originId: string,
     destinationId: string,
     assetId: string,
@@ -63,7 +46,23 @@ export class TrackService {
     _paintSeed: number,
     _paintIndex: number,
   ): Promise<void> {
-    const originInventory = await this._getInventory(originId);
+    this.logger.log(
+      'trackItem',
+      contractAddress,
+      originId,
+      destinationId,
+      assetId,
+      _floatValue,
+      _paintSeed,
+      _paintIndex,
+    );
+
+    const originInventory = await this._getInventory(originId, `'trackItem:' ${originId}`);
+
+    if (originInventory === 'INVENTORY_PRIVATE') {
+      this.logger.error(`Inventory for originId ${originId} is private. Cannot proceed.`);
+      return await this.walletService.confirmTrade(contractAddress, false, 'INVENTORY_PRIVATE');
+    }
 
     const item = originInventory.find(
       (item: { assetid: string }) => item.assetid === assetId,
@@ -89,6 +88,8 @@ export class TrackService {
           paintIndex: _paintIndex,
         },
         similarItemsCount,
+        state: ItemState.TRACKING_SELLER,
+        contractAddress: contractAddress,
       });
 
       await this.trackedItemsRepository.save(trackedItem);
@@ -97,13 +98,15 @@ export class TrackService {
       this.trackedItems.push(trackedItem);
 
       this.logger.log(
-        `Start tracking item ${assetId} from ${originId} to ${destinationId}`,
+        `[${contractAddress}] Start tracking item ${assetId} from ${originId} to ${destinationId}`,
       );
     } else {
-      console.warn(
-        `No item with assetId ${assetId} found in the steam inventory, no tracking stored.`,
+      this.logger.error(
+        `[${contractAddress}] No item with assetId ${assetId} found in the seller ${originId} inventory, no tracking stored.`,
       );
       // TODO: delist the item from the csx-market and refund buyer
+      // Check if contract status is already more than completed?
+      // If not, and if the status is seller committed, then refund buyer.
     }
   }
 
@@ -120,6 +123,7 @@ export class TrackService {
     this.logger.log(`Checking ${this.trackedItems.length} tracked items.`);
 
     let count = 0;
+
     for (const trackedItem of this.trackedItems) {
       try {
         count++;
@@ -128,49 +132,130 @@ export class TrackService {
         );
 
         this.logger.log(
-          `checking tracked item ${trackedItem.id} ${trackedItem.originId} ${trackedItem.destinationId} ${trackedItem.market_hash_name} ${trackedItem.details.floatValue} ${trackedItem.details.paintSeed} ${trackedItem.details.paintIndex}`,
+          `checking tracked item ${trackedItem.id} ${trackedItem.state} ${trackedItem.originId} ${trackedItem.destinationId} ${trackedItem.market_hash_name} ${trackedItem.details.floatValue} ${trackedItem.details.paintSeed} ${trackedItem.details.paintIndex}`,
         );
 
-        const similarItemsInTargetInventory = await this._getSimilarItemsCount(
-          trackedItem.destinationId,
-          trackedItem.market_hash_name,
-          trackedItem.details.floatValue,
-          trackedItem.details.paintSeed,
-          trackedItem.details.paintIndex,
-        );
-
-        if (similarItemsInTargetInventory > trackedItem.similarItemsCount) {
-          this.logger.log(
-            `Item ${trackedItem.id} has moved from ${trackedItem.originId} to ${trackedItem.destinationId}.`,
-          );
-
-          // Release the item from the csx-market
-
-          // // Remove the item from the in-memory list
-          // this.trackedItems = this.trackedItems.filter(
-          //   (item) => item.id !== trackedItem.id,
-          // );
-
-          // // Remove the item from the database
-          // await this.trackedItemsRepository.remove(trackedItem);
+        switch (trackedItem.state) {
+          case ItemState.TRACKING_SELLER:
+            await this.__checkSellerInventory(trackedItem);
+            break;
+          case ItemState.TRACKING_BUYER:
+            await this.__checkBuyerInventory(trackedItem);
+            break;
         }
       } catch (error) {
-        this.logger.error(`Error processing tracked item with ID: ${trackedItem.id}`, error.message);
+        this.logger.error(
+          `Error processing tracked item with ID: ${trackedItem.id}`,
+          error.message,
+        );
       }
     }
+    await this.cleanupCache();
     this.logger.warn('Done checking items.');
     this.isCheckingItems = false;
   }
 
+  // To check if the item is still in the seller's inventory
+  private async __checkSellerInventory(
+    trackedItem: TrackedItem,
+  ): Promise<void> {
+    const originInventory = await this._getInventory(trackedItem.originId, `'__checkSellerInventory': ${trackedItem.id}`);
+
+    const item = originInventory.find(
+      (item: { assetid: string }) => item.assetid === trackedItem.assetId,
+    );
+
+    if (!item) {
+      this.logger.log(
+        `Item ${trackedItem.id} has been removed from ${trackedItem.originId}'s inventory.`,
+      );
+
+      // update the item state to tracking buyer
+      trackedItem.state = ItemState.TRACKING_BUYER;
+      await this.trackedItemsRepository.save(trackedItem);
+      await this.__checkBuyerInventory(trackedItem);
+    }
+  }
+
+  // To check if the item is in the buyer's inventory
+  private async __checkBuyerInventory(trackedItem: TrackedItem): Promise<void> {
+    const similarItemsInTargetInventory = await this._getSimilarItemsCount(
+      trackedItem.destinationId,
+      trackedItem.market_hash_name,
+      trackedItem.details.floatValue,
+      trackedItem.details.paintSeed,
+      trackedItem.details.paintIndex,
+    );
+
+    // 
+    if (similarItemsInTargetInventory === -1){
+      console.log('Inventory is private');      
+    }
+      //return this._confirmTrade(trackedItem, true); // TODO: handle this case (-1 = inv private), by dismissing check buyer's inventory in the _checkTrackedItems() method;
+
+    if (similarItemsInTargetInventory > trackedItem.similarItemsCount) {
+      this.logger.log(
+        `Item ${trackedItem.id} has moved from ${trackedItem.originId} to ${trackedItem.destinationId}.`,
+      );
+      // Release the item from the csx-market
+      this._confirmTrade(trackedItem, true, 'DELIVERED');
+    }
+  }
+
+  _confirmTrade(trackedItem: TrackedItem, veridict: boolean, message: string) {
+    try {      
+      this.walletService
+        .confirmTrade(trackedItem.contractAddress, veridict, message)
+        .then((res) => {
+          this.logger.log(
+            `Confirmed trade ${trackedItem.contractAddress} with result: $`,
+          );
+          this.logger.log(res);
+        })
+        .catch((error) => {
+          this.logger.error(`Error confirming trade ${trackedItem.contractAddress}: ${trackedItem.id}`, error);
+          this.logger.error(error);
+        });
+    } catch (error) {
+      this.logger.error(`Error confirming trade: ${trackedItem.id}`, error);
+      this.logger.error(error);
+    }
+  }
+
   // To get the inventory of a user
-  // Code 403: Private inventory
+  /** Code 403: Private inventory
+   * {
+      "error": "Could not retrieve user inventory. Make sure profile and inventory is public. (403)",
+      "code": 403
+      }
+   */
 
-  private async _getInventory(_steamId64: string): Promise<any> {
-    try {
-      const MAX_RETRIES = 3; // Maximum retry count
-      const RETRY_DELAY_MS = 1000; // Delay between retries in milliseconds
+  private inventoryCache: { [key: string]: { timestamp: number; data: any } } = {};
+  private ongoingRequests: Map<string, Promise<any>> = new Map();
+  private async _getInventory(_steamId64: string, callerName: string): Promise<any> {
+    this.logger.warn(`_getInventory() called by ${callerName}`);
+    const currentTimestamp = Date.now();
 
-      const { data } = await firstValueFrom(
+    // Check if data exists in cache and is recent
+    if (
+      this.inventoryCache[_steamId64] &&
+      currentTimestamp - this.inventoryCache[_steamId64].timestamp <
+        this.CACHE_TIME_MS
+    ) {
+      this.logger.warn('Using cached data');
+      return this.inventoryCache[_steamId64].data;
+    }
+
+    // If there's an ongoing request for this _steamId64, wait for its completion and return its result
+    if (this.ongoingRequests.has(_steamId64)) {
+      this.logger.warn(
+        `_getInventory() Waiting for ongoing request for ${_steamId64} to end`,
+      );
+      return await this.ongoingRequests.get(_steamId64);
+    }
+
+    const fetchData = async () => {
+      const response = await firstValueFrom(
         this.httpService
           .get<InventoryResponse>(
             `https://api.steamapis.com/steam/inventory/${_steamId64}/730/2?api_key=${this.config.get<string>(
@@ -178,18 +263,29 @@ export class TrackService {
             )}`,
           )
           .pipe(
-            //retryWithDelayAndLimit(RETRY_DELAY_MS, MAX_RETRIES),
             catchError((error: AxiosError) => {
-              this.logger.error(error.response.data);
-              // If the error is not catched, turn of the isCheckingItems flag
-              // this.logger.warn('Setting isCheckingItems to false.');
-              // this.isCheckingItems = false;
-              throw 'An error happened in _getInventory!';
+              const errorResult = error.response.data as {
+                error: string;
+                code: number;
+              };
+              this.logger.error('Error in _getInventory: ', errorResult.error);
+
+              if (
+                errorResult.code === 403 &&
+                errorResult.error.includes('Could not retrieve user inventory')
+              ) {
+                return of('INVENTORY_PRIVATE'); // Return the special string here
+              }
+              throw new Error(`An error happened in _getInventory! ${error}`);
             }),
           ),
       );
 
-      //console.log('full url', `https://api.steamapis.com/steam/inventory/${_steamId64}/730/2?api_key=${this.config.get<string>('STEAMAPIS_KEY')}`);
+      if (typeof response === 'string' && response === 'INVENTORY_PRIVATE') {
+        return 'INVENTORY_PRIVATE';
+      }
+
+      const { data } = response as AxiosResponse<InventoryResponse, any>;
 
       const merged = [];
       for (const _asset of data.assets) {
@@ -198,7 +294,6 @@ export class TrackService {
             desc.classid === _asset.classid &&
             desc.instanceid === _asset.instanceid,
         );
-
         if (description) {
           merged.push({
             appid: _asset.appid,
@@ -211,9 +306,43 @@ export class TrackService {
           });
         }
       }
+
+      this.inventoryCache[_steamId64] = {
+        timestamp: currentTimestamp,
+        data: merged,
+      };
       return merged;
+    };
+
+    const fetchDataPromise = fetchData();
+
+    // Store the promise in the ongoingRequests map
+    this.ongoingRequests.set(_steamId64, fetchDataPromise);
+
+    try {
+      const result = await fetchDataPromise;
+
+      // Remove the promise from the map after its completion
+      this.ongoingRequests.delete(_steamId64);
+
+      return result;
     } catch (error) {
-      console.log('ERRRRR!!!!', error);
+      // Remove the promise from the map in case of an error
+      this.ongoingRequests.delete(_steamId64);
+      this.logger.error('Catched: _getInventory in track.service', error);
+    }
+  }
+
+  private CACHE_TIME_MS = 10 * 1000; // 30 seconds
+  private async cleanupCache() {
+    const currentTimestamp = Date.now();
+    for (const steamId in this.inventoryCache) {
+      if (
+        currentTimestamp - this.inventoryCache[steamId].timestamp >=
+        this.CACHE_TIME_MS
+      ) {
+        delete this.inventoryCache[steamId];
+      }
     }
   }
 
@@ -225,7 +354,10 @@ export class TrackService {
     targetPaintSeed: number,
     targetPaintIndex: number,
   ): Promise<number> {
-    const targetInventory = await this._getInventory(destinationId);
+    const targetInventory = await this._getInventory(destinationId, `_getSimilarItemsCount ${destinationId}`);
+
+    if (targetInventory === 'INVENTORY_PRIVATE') return -1; // TODO: handle this case, by dismissing check buyer's inventory in the _checkTrackedItems() method;
+
     let similarItemsCount = 0;
 
     const sameMarketHashNameItems = targetInventory.filter(
@@ -272,10 +404,37 @@ export class TrackService {
   @Cron(CronExpression.EVERY_MINUTE)
   public async handleCron(): Promise<void> {
     if (!this.cronEnabled) return this.logger.warn('Cron is disabled.');
-    if (this.isCheckingItems)
+    if (this.isCheckingItems) {
       return this.logger.warn('Already checking items.');
+    }
     await this._checkTrackedItems();
   }
+
+  public removeTrackedItem(contractAddress: string): void {
+    this.logger.warn(
+      `Removing tracked item with contract address: ${contractAddress}`,
+    );
+    this.trackedItems = this.trackedItems.filter(
+      (item) => item.contractAddress !== contractAddress,
+    );
+
+    this.trackedItemsRepository.delete({ contractAddress });
+  }
+
+  ///////////////////////////////////////////////////////////////
+
+  // public async isAssetIdInInventory(
+  //   _steamId64: string,
+  //   assetId: string,
+  // ): Promise<boolean> {
+  //   const inventory = await this._getInventory(_steamId64);
+  //   const item = inventory.find(
+  //     (item: { assetid: string }) => item.assetid === assetId,
+  //   );
+  //   return item ? true : false;
+  // }
+
+  ///////////////////////////////////////////////////////////////
 }
 
 type targetItem = {
@@ -285,3 +444,9 @@ type targetItem = {
   paintIndex: number;
 };
 
+class InventoryPrivateError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InventoryPrivateError';
+  }
+}
