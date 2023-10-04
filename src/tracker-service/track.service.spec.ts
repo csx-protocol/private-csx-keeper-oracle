@@ -230,7 +230,7 @@ describe('TrackService', () => {
       // Wait for the async initialization if isResetAllMocks is true 
       //await service['_loadTrackedItems']();
  
-      await service.trackItem('76561198185748194', '76561198249128626', 'test-name-404', 0.01, 100, 10);
+      await service.trackItem('0x00', '76561198185748194', '76561198249128626', 'test-name-404', 0.01, 100, 10);
 
       expect(service['trackedItems']).toHaveLength(0);
     });
@@ -367,7 +367,7 @@ describe('TrackService', () => {
       // Wait for the async initialization if isResetAllMocks is true 
       //await service['_loadTrackedItems']();
 
-      await service.trackItem('76561198185748194', '76561198249128626', 'test-name-1', 0.01, 100, 10);
+      await service.trackItem('0x00', '76561198185748194', '76561198249128626', 'test-name-1', 0.01, 100, 10);
         
       // Assert that the item was added to the trackedItems array
       expect(service['trackedItems']).toHaveLength(1);
