@@ -16,7 +16,7 @@ export const environment = {
     rpcUrl: process.env.PROVIDER,
   },
   contractFactory: {
-    address: '0x4DF185C70F2F9a87B5c2f8Ec20ceC077E61c01CB',
+    address: '0x624C46055c583078c05B2B948c87B0ae3a7b6E57',
     abi: [
       {
         "inputs": [
@@ -82,6 +82,47 @@ export const environment = {
         "type": "constructor"
       },
       {
+        "inputs": [],
+        "name": "AssetIDAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_address",
+            "type": "address"
+          }
+        ],
+        "name": "InvalidAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "InvalidPriceType",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NoTradeCreated",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotCouncil",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotTradeContract",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "UserBanned",
+        "type": "error"
+      },
+      {
         "anonymous": false,
         "inputs": [
           {
@@ -117,30 +158,6 @@ export const environment = {
         ],
         "name": "TradeContractStatusChange",
         "type": "event"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "string",
-            "name": "",
-            "type": "string"
-          },
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "name": "assetIdFromUserAddrssToTradeAddrss",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
       },
       {
         "inputs": [],
@@ -184,184 +201,69 @@ export const environment = {
       {
         "inputs": [
           {
-            "internalType": "string",
-            "name": "_assetId",
-            "type": "string"
-          },
-          {
             "internalType": "address",
-            "name": "sellerAddrss",
-            "type": "address"
-          }
-        ],
-        "name": "hasAlreadyListedItem",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "contractAddress",
-            "type": "address"
-          }
-        ],
-        "name": "isThisTradeContract",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "keepersContract",
-        "outputs": [
-          {
-            "internalType": "contract IKeepers",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "enum TradeStatus",
-            "name": "status",
-            "type": "uint8"
-          },
-          {
-            "internalType": "string",
-            "name": "data",
-            "type": "string"
-          },
-          {
-            "internalType": "address",
-            "name": "sellerAddress",
+            "name": "_keepers",
             "type": "address"
           },
           {
             "internalType": "address",
-            "name": "buyerAddress",
+            "name": "_users",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_tradeFactoryBaseStorage",
             "type": "address"
           }
         ],
-        "name": "onStatusChange",
+        "name": "changeContracts",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
       },
       {
-        "inputs": [],
-        "name": "paymentTokens",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "weth",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "usdc",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "usdt",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "referralRegistryAddress",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
         "inputs": [
           {
-            "internalType": "string",
-            "name": "_assetId",
-            "type": "string"
+            "components": [
+              {
+                "internalType": "address",
+                "name": "weth",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "usdc",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "usdt",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct PaymentTokens",
+            "name": "_paymentTokens",
+            "type": "tuple"
           },
           {
             "internalType": "address",
-            "name": "sellerAddrss",
+            "name": "_referralRegistryAddress",
             "type": "address"
-          }
-        ],
-        "name": "removeAssetIdUsed",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "sCSXTokenAddress",
-        "outputs": [
+          },
           {
             "internalType": "address",
-            "name": "",
+            "name": "_sCSXTokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_buyAssistoor",
             "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "totalContracts",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "usersContract",
-        "outputs": [
-          {
-            "internalType": "contract IUsers",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
+        "name": "changeContractsForTrade",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -483,12 +385,12 @@ export const environment = {
       {
         "inputs": [
           {
-            "internalType": "uint256",
-            "name": "index",
-            "type": "uint256"
+            "internalType": "address",
+            "name": "tradeAddrs",
+            "type": "address"
           }
         ],
-        "name": "getTradeDetailsByIndex",
+        "name": "getTradeDetailsByAddress",
         "outputs": [
           {
             "components": [
@@ -647,12 +549,12 @@ export const environment = {
       {
         "inputs": [
           {
-            "internalType": "address",
-            "name": "tradeAddrs",
-            "type": "address"
+            "internalType": "uint256",
+            "name": "index",
+            "type": "uint256"
           }
         ],
-        "name": "getTradeDetailsByAddress",
+        "name": "getTradeDetailsByIndex",
         "outputs": [
           {
             "components": [
@@ -872,17 +774,157 @@ export const environment = {
       {
         "inputs": [
           {
+            "internalType": "address",
+            "name": "contractAddress",
+            "type": "address"
+          }
+        ],
+        "name": "isThisTradeContract",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "keepersContract",
+        "outputs": [
+          {
+            "internalType": "contract IKeepers",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "enum TradeStatus",
             "name": "status",
             "type": "uint8"
+          },
+          {
+            "internalType": "enum TradeStatus",
+            "name": "prevStatus",
+            "type": "uint8"
+          },
+          {
+            "internalType": "string",
+            "name": "data",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "sellerAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "buyerAddress",
+            "type": "address"
           }
         ],
-        "name": "getTradeCountByStatus",
+        "name": "onStatusChange",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "paymentTokens",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "weth",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "usdc",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "usdt",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "referralRegistryAddress",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "sCSXTokenAddress",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "totalContracts",
         "outputs": [
           {
             "internalType": "uint256",
             "name": "",
             "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "enum TradeStatus",
+            "name": "",
+            "type": "uint8"
+          }
+        ],
+        "name": "tradeCountByStatus",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "usersContract",
+        "outputs": [
+          {
+            "internalType": "contract IUsers",
+            "name": "",
+            "type": "address"
           }
         ],
         "stateMutability": "view",
@@ -984,6 +1026,76 @@ export const environment = {
       },
       {
         "inputs": [],
+        "name": "DividendDepositFailed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotCommitted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotFactory",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotForSale",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotGroup",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotKeeperNode",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotKeeperOrNode",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotParty",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotSeller",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "StatusNotBuyerCommitted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "StatusNotDisputeReady",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "StatusNotSellerCommitted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TimeNotElapsed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "TradeIDNotRemoved",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "buyer",
         "outputs": [
           {
@@ -997,6 +1109,13 @@ export const environment = {
       },
       {
         "inputs": [],
+        "name": "buyerCancel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
         "name": "buyerCommitTimestamp",
         "outputs": [
           {
@@ -1006,6 +1125,13 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "buyerConfirmReceived",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -1024,6 +1150,41 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "partner",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "token",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct TradeUrl",
+            "name": "_buyerTradeUrl",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "_affLink",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "_buyerAddress",
+            "type": "address"
+          }
+        ],
+        "name": "commitBuy",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -1080,6 +1241,66 @@ export const environment = {
       },
       {
         "inputs": [],
+        "name": "finalityResult",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "_affLink",
+            "type": "bytes32"
+          }
+        ],
+        "name": "getNetValue",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "buyerNetPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "sellerNetProceeds",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "affiliatorNetReward",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenHoldersNetReward",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getStatusCount",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
         "name": "hasInit",
         "outputs": [
           {
@@ -1089,6 +1310,66 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "material",
+                "type": "string"
+              },
+              {
+                "internalType": "uint8",
+                "name": "slot",
+                "type": "uint8"
+              },
+              {
+                "internalType": "string",
+                "name": "imageLink",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct Sticker[]",
+            "name": "_stickers",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "string",
+            "name": "_weaponType",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "_paymentToken",
+            "type": "address"
+          },
+          {
+            "internalType": "enum PriceType",
+            "name": "_priceType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "_referralRegistryContract",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_sCSXToken",
+            "type": "address"
+          }
+        ],
+        "name": "initExtraInfo",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -1144,6 +1425,24 @@ export const environment = {
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "bool",
+            "name": "isTradeMade",
+            "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "message",
+            "type": "string"
+          }
+        ],
+        "name": "keeperNodeConfirmsTrade",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "keepersContract",
         "outputs": [
@@ -1154,6 +1453,19 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "_complaint",
+            "type": "string"
+          }
+        ],
+        "name": "openDispute",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -1209,6 +1521,34 @@ export const environment = {
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "bool",
+            "name": "isFavourOfBuyer",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "giveWarningToSeller",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "giveWarningToBuyer",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isWithValue",
+            "type": "bool"
+          }
+        ],
+        "name": "resolveDispute",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "sCSXToken",
         "outputs": [
@@ -1249,6 +1589,20 @@ export const environment = {
       },
       {
         "inputs": [],
+        "name": "sellerCancel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "sellerConfirmsTrade",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
         "name": "sellerTradeUrl",
         "outputs": [
           {
@@ -1263,6 +1617,19 @@ export const environment = {
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bool",
+            "name": "_sellerCommited",
+            "type": "bool"
+          }
+        ],
+        "name": "sellerTradeVeridict",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -1296,6 +1663,38 @@ export const environment = {
             "internalType": "enum TradeStatus",
             "name": "",
             "type": "uint8"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "statusHistory",
+        "outputs": [
+          {
+            "internalType": "enum TradeStatus",
+            "name": "",
+            "type": "uint8"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "stickerLength",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
           }
         ],
         "stateMutability": "view",
@@ -1368,243 +1767,6 @@ export const environment = {
           {
             "internalType": "uint256",
             "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "material",
-                "type": "string"
-              },
-              {
-                "internalType": "uint8",
-                "name": "slot",
-                "type": "uint8"
-              },
-              {
-                "internalType": "string",
-                "name": "imageLink",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct Sticker[]",
-            "name": "_stickers",
-            "type": "tuple[]"
-          },
-          {
-            "internalType": "string",
-            "name": "_weaponType",
-            "type": "string"
-          },
-          {
-            "internalType": "address",
-            "name": "_paymentToken",
-            "type": "address"
-          },
-          {
-            "internalType": "enum PriceType",
-            "name": "_priceType",
-            "type": "uint8"
-          },
-          {
-            "internalType": "address",
-            "name": "_referralRegistryContract",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "_sCSXToken",
-            "type": "address"
-          }
-        ],
-        "name": "initExtraInfo",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "stickerLength",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "sellerCancel",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "partner",
-                "type": "uint256"
-              },
-              {
-                "internalType": "string",
-                "name": "token",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct TradeUrl",
-            "name": "_buyerTradeUrl",
-            "type": "tuple"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "_affLink",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "address",
-            "name": "_buyerAddress",
-            "type": "address"
-          }
-        ],
-        "name": "commitBuy",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "buyerCancel",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bool",
-            "name": "sellerCommited",
-            "type": "bool"
-          }
-        ],
-        "name": "sellerTradeVeridict",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "buyerConfirmReceived",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "sellerConfirmsTrade",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bool",
-            "name": "isTradeMade",
-            "type": "bool"
-          }
-        ],
-        "name": "keeperNodeConfirmsTrade",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "string",
-            "name": "_complaint",
-            "type": "string"
-          }
-        ],
-        "name": "openDispute",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bool",
-            "name": "isFavourOfBuyer",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "giveWarningToSeller",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "giveWarningToBuyer",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "isWithValue",
-            "type": "bool"
-          }
-        ],
-        "name": "resolveDispute",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bytes32",
-            "name": "_affLink",
-            "type": "bytes32"
-          }
-        ],
-        "name": "getNetValue",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "buyerNetPrice",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "sellerNetProceeds",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "affiliatorNetReward",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "tokenHoldersNetReward",
             "type": "uint256"
           }
         ],
