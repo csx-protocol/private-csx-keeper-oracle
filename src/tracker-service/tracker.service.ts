@@ -101,106 +101,106 @@ export class TrackerService {
 
   //
 
-  async onBuyerCommitted(event: any, blockHeight: number): Promise<void> {
+  // async onBuyerCommitted(event: any, blockHeight: number): Promise<void> {
 
-    //Validate if buyer inv is public?
+  //   //Validate if buyer inv is public?
 
 
-    //
-    // const [isValid, assetId, validationResults] = await this.validateIsItemInfoAndInspectSame(event.contractAddress);
-    // console.log('Validation Results', validationResults);
+  //   //
+  //   // const [isValid, assetId, validationResults] = await this.validateIsItemInfoAndInspectSame(event.contractAddress);
+  //   // console.log('Validation Results', validationResults);
     
-    // if (!isValid) {
-    //   this.logger.warn('Item is not valid, cancel trade and refund');
-    //   // TODO: Cancel Trade and Refund call here.
-    //   return;
-    // }
+  //   // if (!isValid) {
+  //   //   this.logger.warn('Item is not valid, cancel trade and refund');
+  //   //   // TODO: Cancel Trade and Refund call here.
+  //   //   return;
+  //   // }
 
-    // const data = event.data.split('||');
-    // const sellerPartnerId = data[0].split('+')[0];
-    // const buyerPartnerId = data[1].split('+')[0];
+  //   // const data = event.data.split('||');
+  //   // const sellerPartnerId = data[0].split('+')[0];
+  //   // const buyerPartnerId = data[1].split('+')[0];
 
-    // const sellerPartnerIdInt = parseInt(sellerPartnerId);
-    // const buyerPartnerIdInt = parseInt(buyerPartnerId);
+  //   // const sellerPartnerIdInt = parseInt(sellerPartnerId);
+  //   // const buyerPartnerIdInt = parseInt(buyerPartnerId);
 
-    // const sellerSteamId64 = `7656119${sellerPartnerIdInt + 7960265728}`;
-    // const buyerSteamId64 = `7656119${buyerPartnerIdInt + 7960265728}`;
+  //   // const sellerSteamId64 = `7656119${sellerPartnerIdInt + 7960265728}`;
+  //   // const buyerSteamId64 = `7656119${buyerPartnerIdInt + 7960265728}`;
 
-    // this.trackService.trackItem(
-    //   sellerSteamId64,
-    //   buyerSteamId64,
-    //   assetId,
-    //   validationResults.floatValue.steamValue,
-    //   validationResults.paintSeed.steamValue,
-    //   validationResults.paintIndex.steamValue,
-    // );
+  //   // this.trackService.trackItem(
+  //   //   sellerSteamId64,
+  //   //   buyerSteamId64,
+  //   //   assetId,
+  //   //   validationResults.floatValue.steamValue,
+  //   //   validationResults.paintSeed.steamValue,
+  //   //   validationResults.paintIndex.steamValue,
+  //   // );
 
-    // trackItem(originId: string, destinationId: string, assetId: string): Promise<void>
-    // originId = seller SteamId64
-    // destinationId = buyer SteamId64
-    // assetId = item's assetId in seller inventory
+  //   // trackItem(originId: string, destinationId: string, assetId: string): Promise<void>
+  //   // originId = seller SteamId64
+  //   // destinationId = buyer SteamId64
+  //   // assetId = item's assetId in seller inventory
     
     
 
-    // TODO: Implement method
+  //   // TODO: Implement method
 
-    // Fetch inspectURL, float, paint seed, pattern index and store to db.
-    // Check if item is in seller inventory. ()
-    // If so, check if seller has market_hash_name and remember count.
-    // Start interval check if item is in seller inventory.
-    //
-    // Interval check if item is in buyer inventory.
-    // If so, check if buyer has market_hash_name and remember count + 1.
+  //   // Fetch inspectURL, float, paint seed, pattern index and store to db.
+  //   // Check if item is in seller inventory. ()
+  //   // If so, check if seller has market_hash_name and remember count.
+  //   // Start interval check if item is in seller inventory.
+  //   //
+  //   // Interval check if item is in buyer inventory.
+  //   // If so, check if buyer has market_hash_name and remember count + 1.
 
-    console.log('Tracker: onBuyerCommitted', event, blockHeight);
+  //   console.log('Tracker: onBuyerCommitted', event, blockHeight);
 
-    // Can we make a valid inspect url from partnerID and assetID or we just call contract and then inspect url?
+  //   // Can we make a valid inspect url from partnerID and assetID or we just call contract and then inspect url?
 
-    /*
-      contractAddress: '0x60B0705084f3B7C04b8c2e7a6D747DA1b1702a1e',
-      newStatus: '2',
-      data: '225482466+EP2Wgs2R||225482466+lKCMUg5E||0x16ad20e2d2f5fcb50ad9879671f51ae2ca9a93fe||44661960000000000'
+  //   /*
+  //     contractAddress: '0x60B0705084f3B7C04b8c2e7a6D747DA1b1702a1e',
+  //     newStatus: '2',
+  //     data: '225482466+EP2Wgs2R||225482466+lKCMUg5E||0x16ad20e2d2f5fcb50ad9879671f51ae2ca9a93fe||44661960000000000'
 
-      event TradeContractStatusChange(
-        address contractAddress,
-        TradeStatus,
-        string data,
-        address sellerAddress,
-        address buyerAddress
-      );
+  //     event TradeContractStatusChange(
+  //       address contractAddress,
+  //       TradeStatus,
+  //       string data,
+  //       address sellerAddress,
+  //       address buyerAddress
+  //     );
 
-      function onStatusChange(TradeStatus status, string memory data, address sellerAddress, address buyerAddress);
+  //     function onStatusChange(TradeStatus status, string memory data, address sellerAddress, address buyerAddress);
 
-      string memory data = string(
-            abi.encodePacked(
-                Strings.toString(sellerTradeUrl.partner),
-                "+",
-                sellerTradeUrl.token,
-                "||",
-                Strings.toString(_buyerTradeUrl.partner),
-                "+",
-                _buyerTradeUrl.token,
-                "||",
-                Strings.toHexString(buyer),
-                "||",
-                Strings.toString(weiPrice)
-            )
-        );
+  //     string memory data = string(
+  //           abi.encodePacked(
+  //               Strings.toString(sellerTradeUrl.partner),
+  //               "+",
+  //               sellerTradeUrl.token,
+  //               "||",
+  //               Strings.toString(_buyerTradeUrl.partner),
+  //               "+",
+  //               _buyerTradeUrl.token,
+  //               "||",
+  //               Strings.toHexString(buyer),
+  //               "||",
+  //               Strings.toString(weiPrice)
+  //           )
+  //       );
 
-      factoryContract.onStatusChange(status, data, seller, buyer);
+  //     factoryContract.onStatusChange(status, data, seller, buyer);
 
-    */
+  //   */
 
-    // Snapshot inventory of seller. (validate seller has item(apiFloatCheckIt and compare with contract event float))
-    // const sellerSnapshot: Snapshot = {
-    //   steamId64: event.seller,
-    //   inventory: [],
-    //   valid: false,
-    //   hashNameCount: 0,
-    // };
+  //   // Snapshot inventory of seller. (validate seller has item(apiFloatCheckIt and compare with contract event float))
+  //   // const sellerSnapshot: Snapshot = {
+  //   //   steamId64: event.seller,
+  //   //   inventory: [],
+  //   //   valid: false,
+  //   //   hashNameCount: 0,
+  //   // };
 
-    // Snapshot inventory of buyer (check if buyer has market_hash_name and remember count).
-  }
+  //   // Snapshot inventory of buyer (check if buyer has market_hash_name and remember count).
+  // }
 
   async onSellerCommitted(event: any, blockHeight: number): Promise<void> {
     console.log('Tracker: onSellerCommitted', event, blockHeight);
@@ -230,9 +230,13 @@ export class TrackerService {
     );
   }
 
-  async onCompleted(event: any, blockHeight: number): Promise<void> {
-    console.log('Tracker: onCompleted', event, blockHeight);
-    this.trackService.removeTrackedItem(event.contractAddress);
+  // async onCompleted(event: any, blockHeight: number): Promise<void> {
+  //   console.log('Tracker: onCompleted', event, blockHeight);
+  //   this.trackService.removeTrackedItem(event.contractAddress);
+  // }
+
+  async removeTrackedItem(contractAddress: string): Promise<void> {
+    this.trackService.removeTrackedItem(contractAddress);
   }
 
   // NEW NEW NEW NEW NEW NEW NEW NEW NEW 
