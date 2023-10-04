@@ -61,7 +61,7 @@ export class TrackService {
 
     if (originInventory === 'INVENTORY_PRIVATE') {
       this.logger.error(`Inventory for originId ${originId} is private. Cannot proceed.`);
-      return await this.walletService.confirmTrade(contractAddress, false, 'INVENTORY_PRIVATE');
+      return await this.walletService.confirmTrade(contractAddress, false, 'SELLER_INVENTORY_PRIVATE');
     }
 
     const item = originInventory.find(
@@ -69,13 +69,15 @@ export class TrackService {
     );
 
     if (item) {
-      const similarItemsCount = await this._getSimilarItemsCount(
+      const destinationSimilarItemsCount = await this._getSimilarItemsCount(
         destinationId,
         item.market_hash_name,
         _floatValue,
         _paintSeed,
         _paintIndex,
       );
+
+      // Ideally push to message broker here if the destinationSimilarItemsCount is -1 (inventory private) and let chats consume.
 
       const trackedItem = this.trackedItemsRepository.create({
         originId,
@@ -87,7 +89,7 @@ export class TrackService {
           paintSeed: _paintSeed,
           paintIndex: _paintIndex,
         },
-        similarItemsCount,
+        similarItemsCount: destinationSimilarItemsCount,
         state: ItemState.TRACKING_SELLER,
         contractAddress: contractAddress,
       });
