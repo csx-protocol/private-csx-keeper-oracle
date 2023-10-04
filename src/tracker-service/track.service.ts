@@ -444,9 +444,9 @@ type targetItem = {
   paintIndex: number;
 };
 
-class InventoryPrivateError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'InventoryPrivateError';
-  }
-}
+// class InventoryPrivateError extends Error {
+//   constructor(message: string) {
+//     super(message);
+//     this.name = 'InventoryPrivateError';
+//   }
+// }
