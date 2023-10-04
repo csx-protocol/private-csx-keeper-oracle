@@ -345,7 +345,7 @@ export class Web3Service implements OnModuleInit {
       buyerTradeUrl: _buyerTradeUrl,
     });
 
-    await this.tracker.onBuyerCommitted(event, _blockHeight);
+    //await this.tracker.onBuyerCommitted(event, _blockHeight);
 
     return result;
   }
@@ -369,19 +369,22 @@ export class Web3Service implements OnModuleInit {
 
   private async handleCompleted(event: any, _blockHeight: number) {
     const result = await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
-    await this.tracker.onCompleted(event, _blockHeight);
+    await this.tracker.removeTrackedItem(event.contractAddress);
     return result;
   }
 
   private async handleDisputed(event: any, _blockHeight: number) {
+    await this.tracker.removeTrackedItem(event.contractAddress);
     return await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
   }
 
   private async handleResolved(event: any, _blockHeight: number) {
+    await this.tracker.removeTrackedItem(event.contractAddress);
     return await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
   }
 
   private async handleClawbacked(event: any, _blockHeight: number) {
+    await this.tracker.removeTrackedItem(event.contractAddress);
     return await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
   }
 
