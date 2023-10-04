@@ -24,7 +24,29 @@ export class Wallet {
 
     this.web3signer = new Web3(this.localKeyProvider); //Doesnt work with subscriptions logs!
 
-    this.web3 = new Web3(new Web3.providers.WebsocketProvider(this.rpcUrl));
+    const options = {
+        timeout: 30000, // ms
+    
+        clientConfig: {
+            // Useful if requests are large
+            maxReceivedFrameSize: 100000000,   // bytes - default: 1MiB
+            maxReceivedMessageSize: 100000000, // bytes - default: 8MiB
+    
+            // Useful to keep a connection alive
+            keepalive: true,
+            keepaliveInterval: -1 // ms
+        },
+    
+        // Enable auto reconnection
+        reconnect: {
+            auto: true,
+            delay: 1000, // ms
+            maxAttempts: 10,
+            onTimeout: false
+        }
+    };
+
+    this.web3 = new Web3(new Web3.providers.WebsocketProvider(this.rpcUrl, options));
 
     // set the transaction confirmations blocks
     this.web3.eth.transactionConfirmationBlocks = 2;
