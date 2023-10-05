@@ -15,7 +15,7 @@ export class FloatApiService {
   }
 
   async getFloat(inspectLink: string): Promise<any> {
-    const TEMP_API = 'http://localhost:1337/?url=';
+    const TEMP_API = 'https://floats-api-xbeu6.ondigitalocean.app/?url=';
     const obs$ = this.httpService.get<any>(TEMP_API + inspectLink).pipe(
       catchError((error) => {
         if (error.status === 500) {
