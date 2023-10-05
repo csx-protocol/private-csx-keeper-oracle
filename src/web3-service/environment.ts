@@ -10,7 +10,31 @@ export const environment = {
     username: process.env.DBUSER,
     password: process.env.DBPASS,
     database: process.env.DBNAME,
-    caCert: process.env.CACERT,
+    caCert: '-----BEGIN CERTIFICATE-----\n' + 
+    'MIIEQTCCAqmgAwIBAgIUd5Ca0jd3Hj2523K4zhFA9YT/4VUwDQYJKoZIhvcNAQEM\n' +
+    'BQAwOjE4MDYGA1UEAwwvYWQ3OTY1MjktYzI1MS00MmY3LTkxMDktMTk2OTZkNWM5\n' +
+    'MDdmIFByb2plY3QgQ0EwHhcNMjMxMDA1MDc0NDI0WhcNMzMxMDAyMDc0NDI0WjA6\n' +
+    'MTgwNgYDVQQDDC9hZDc5NjUyOS1jMjUxLTQyZjctOTEwOS0xOTY5NmQ1YzkwN2Yg\n' +
+    'UHJvamVjdCBDQTCCAaIwDQYJKoZIhvcNAQEBBQADggGPADCCAYoCggGBAJ2t/Nj2\n' + 
+    'yH7Pp9uecjDEHopccmpYxQ6Hcgv4hQ/8gGvvLr+Xv6X/lOhEnCeRWGepsgtXSBh4\n' +
+    'TX93TQoTdnRMuRq8WHc3fFJO+RTYhMnx4B70iSdMqm02xgNYmC+nE7+6pdcAMVU1\n' +
+    'Y8m+DhcEf02QABPyFO/MG8F0CVzHDG2eSoIaLjFpCtOgL//mGLRR2nmz6gkJSbK9\n' +
+    'f3fxJPLLFpfm2mZgPdzEKVPVF/OO0Fp1LRMLXT12QX3eZAWOAmghXBKEAm0dq9Tz\n' +
+    'mTbfOc4igIq7fa6wDUEo9Vc3Yhq6vmMjgJqU4hzGq/876T0yQ+nh/xRUke7YKVGJ\n' +
+    'pIDjYcjL2kc0aizXFKHjxcbTKkQLsL2yNfhaebVCVlJ0ecRMYBXQT3LvG3HESxbU\n' +
+    'h1k6FcF7+lfVD/VN7eBqArFddVkg038JXTzynCx88ht8QmJhvcvTNGin/wbEWg5F\n' +
+    'i2XVTjP5WIJpygxYREb+ffPF4Kiv7vHlzIklm2UBksTjyaHw0IStr8nEHQIDAQAB\n' +
+    'oz8wPTAdBgNVHQ4EFgQUYupggvV+fTcNnEVhFPT0c+uA5pcwDwYDVR0TBAgwBgEB\n' +
+    '/wIBADALBgNVHQ8EBAMCAQYwDQYJKoZIhvcNAQEMBQADggGBAAqyGq3kQ97C+Dfb\n' +
+    'VP0j+igbJPERyorwtU1RgNW3bJRng7PtR7c96sWlsYk7ayR8jUV0bTBiQBTi+9e8\n' +
+    'DAzY1XK4l7/X4ktj9byBHu7jDjfQOBs4Ew2EUTi3niml/GzzqvZBWCYY28/X5IV6\n' +
+    '0QZHB7eINuWdM2Tn9kvkom91b1iYiif+fZ34v7L32x286hR7V61fy9Fdw8kU7on6\n' + 
+    'tmXWmZI0uArpSi8dy6BfGA0Lae3TMMGohlXO1uZ9fOoVp0kcq8Zvx5S2+ZL7gDWy\n' +
+    'oj2IFPoGKy/fNJKCS5ydbGR4Gv6xjUB1INhB2ai2y61sDYpOqZ0Cwa23opUOtJVW\n' +
+    'Rvn5f1MIj22Nf47ZFUUBSt6NrkI7O2BdkO+CaerNG7e/hKXippCI1YPK/ZnQfEah\n' +
+    'F7edBMk60ytZJ8veceCULgHtcT8Hx09GwOHtza4QZVOA1qL9AmE9cAEnplTkfawv\n' +
+    'U+9L4iYt1K+WGhhV8pLIAxyXlfxvOabuEX2Izso+nfEWM7//VA==\n' +
+    '-----END CERTIFICATE-----\n',
   },
   wallet: {
     key: process.env.WALLETKEY,
