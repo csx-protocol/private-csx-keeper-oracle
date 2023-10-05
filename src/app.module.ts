@@ -31,7 +31,7 @@ import { TrackedItem } from './database/entities/tracked-items/tracked-items.ent
       password: environment.database.password,
       database: environment.database.database,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true,
+      synchronize: false,
       ssl: {
         rejectUnauthorized: false,
         ca: environment.database.caCert,
