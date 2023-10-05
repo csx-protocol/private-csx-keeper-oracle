@@ -88,20 +88,24 @@ export class Web3Service implements OnModuleInit {
         const currentBlockHeight = await this.getCurrentBlockHeight();
 
         if (currentBlockHeight > _toBlockHeight) {
-          this.logger.warn(
-            `SystemStatus.NotReady | More Blocks Incoming | updated to: ${_toBlockHeight} vs current: ${currentBlockHeight}`,
-          );
+          // this.logger.warn(
+          //   `SystemStatus.NotReady | More Blocks Incoming | updated to: ${_toBlockHeight} vs current: ${currentBlockHeight}`,
+          // );
 
-          await this.warmupContractFactoryTopics(
-            _blockHeight + 1,
-            currentBlockHeight,
-          );
+          // await this.warmupContractFactoryTopics(
+          //   _blockHeight + 1,
+          //   currentBlockHeight,
+          // );
         } else {
-          this.logger.warn(
-            `SystemStatus.Ready | Blocks up to date | to block: #${_toBlockHeight}`,
-          );
-          this.listenToContractFactoryTopics(currentBlockHeight);
+          // this.logger.warn(
+          //   `SystemStatus.Ready | Blocks up to date | to block: #${_toBlockHeight}`,
+          // );
+          // this.listenToContractFactoryTopics(currentBlockHeight);
         }
+        this.logger.warn(
+          `SystemStatus.Ready | Blocks up to date | to block: #${_toBlockHeight}`,
+        );
+        this.listenToContractFactoryTopics(_toBlockHeight);
       })
       .catch((error) => {
         this.logger.error(`Error in warmupContractFactoryTopics:`, error);
