@@ -17,7 +17,7 @@ export const environment = {
     rpcUrl: process.env.PROVIDER,
   },
   contractFactory: {
-    address: '0x624C46055c583078c05B2B948c87B0ae3a7b6E57',
+    address: '0x8CBFC70088a6E8e6aAbe134a74F13BA9CDb6D4f5',
     abi: [
       {
         "inputs": [
