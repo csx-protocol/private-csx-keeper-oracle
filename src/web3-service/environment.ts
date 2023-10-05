@@ -10,6 +10,7 @@ export const environment = {
     username: process.env.DBUSER,
     password: process.env.DBPASS,
     database: process.env.DBNAME,
+    caCert: process.env.CACERT,
   },
   wallet: {
     key: process.env.WALLETKEY,
