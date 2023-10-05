@@ -116,7 +116,7 @@ export class TrackService {
   isCheckingItems = false;
   private async _checkTrackedItems(): Promise<void> {
     if (this.trackedItems.length === 0) {
-      this.logger.log('No tracked items.');
+      //this.logger.verbose('No tracked items.');
       return;
     }
 
