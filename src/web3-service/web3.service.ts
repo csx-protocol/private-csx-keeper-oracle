@@ -91,6 +91,9 @@ export class Web3Service implements OnModuleInit {
     };
 
     this.walletService.wallet.alchemy.ws.on(filter, async (log, event)=>{
+      const txHash = log.transactionHash;      
+      const reciept = await this.walletService.wallet.alchemy.transact.waitForTransaction(txHash);
+
       switch(log.topics[0]) {
         case ContractFactoryTopics.statusChange:
           await this._processStatusChangeTopic(log, log.blockNumber);
