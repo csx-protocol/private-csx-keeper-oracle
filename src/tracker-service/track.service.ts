@@ -287,7 +287,7 @@ export class TrackService {
         return 'INVENTORY_PRIVATE';
       }
 
-      const { data } = response as AxiosResponse<InventoryResponse, any>;
+      const { data } = response as unknown as AxiosResponse<InventoryResponse, any>;
 
       const merged = [];
       for (const _asset of data.assets) {
