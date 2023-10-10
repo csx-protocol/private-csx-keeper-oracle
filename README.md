@@ -76,7 +76,7 @@ Nest is [MIT licensed](LICENSE).
 
 ```
 WALLETKEY=''  # Your wallet key
-PROVIDER='ws://' # Your provider
+APIKEY='' # Your Alchemy API key
 STEAMAPIS_KEY='' # Your SteamAPIs API key
 DBHOST='' # Your database host
 DBNAME='' # Your database name

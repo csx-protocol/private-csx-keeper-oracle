@@ -37,8 +37,8 @@ export const environment = {
     '-----END CERTIFICATE-----\n',
   },
   wallet: {
-    key: process.env.WALLETKEY,
-    rpcUrl: process.env.PROVIDER,
+    walletKey: process.env.WALLETKEY,
+    apiKey: process.env.APIKEY,
   },
   contractFactory: {
     address: '0x1618474a7061a0Bd68b4DC87E7FEC3FC4e294DD5',
