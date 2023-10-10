@@ -1,76 +1,36 @@
 /* eslint-disable prettier/prettier */
-import Web3 from 'web3';
-import HDWalletProvider from '@truffle/hdwallet-provider';
+import { Alchemy, Network, Wallet } from 'alchemy-sdk';
+import { ParamType, ethers } from 'ethers';
 
-export class Wallet {
-  private privateKey: string;
-  private rpcUrl: string;
-  private localKeyProvider: HDWalletProvider;
-  private myPAccount: any;
-  public web3: Web3;
-  public web3signer: Web3;
-  public myAccount: any;
+export class WalletBase {
+  alchemy: Alchemy;
+  wallet: Wallet;
 
-  constructor(_privateKey: string, _rpcUrl: string) {
-    this.privateKey = _privateKey;
-    this.rpcUrl = _rpcUrl;
-    //-> Provider & Account
-    // Create web3.js middleware that signs transactions locally
-    this.localKeyProvider = new HDWalletProvider({
-      privateKeys: [this.privateKey],
-      providerOrUrl: this.rpcUrl,
-      pollingInterval: 64000, // Default 4000 milliseconds
-    });
-
-    this.web3signer = new Web3(this.localKeyProvider); //Doesnt work with subscriptions logs!
-
-    const options = {
-        timeout: 30000, // ms
-    
-        clientConfig: {
-            // Useful if requests are large
-            maxReceivedFrameSize: 100000000,   // bytes - default: 1MiB
-            maxReceivedMessageSize: 100000000, // bytes - default: 8MiB
-    
-            // Useful to keep a connection alive
-            keepalive: true,
-            keepaliveInterval: -1 // ms
-        },
-    
-        // Enable auto reconnection
-        reconnect: {
-            auto: true,
-            delay: 1000, // ms
-            maxAttempts: 10,
-            onTimeout: false
-        }
+  private readonly apiKey: string;
+  constructor(_privateKey: string, _apiKey: string) {
+    this.apiKey = _apiKey;
+    const settings = {
+      apiKey: _apiKey,
+      network: Network.ARB_GOERLI,
     };
-
-    this.web3 = new Web3(new Web3.providers.WebsocketProvider(this.rpcUrl, options));
-
-    // set the transaction confirmations blocks
-    this.web3.eth.transactionConfirmationBlocks = 2;
-
-    this.myPAccount = this.web3.eth.accounts.privateKeyToAccount(
-      this.privateKey,
-    );
-
-    this.myAccount = this.myPAccount.address;
+    this.alchemy = new Alchemy(settings);
+    this.wallet = new Wallet(_privateKey, this.alchemy);
   }
 
-  async connectContract(_address: string, _abi: any): Promise<any> {
-    return new this.web3signer.eth.Contract(_abi as any, _address);
+  connectContract(address: string, abi: any) {
+    const provider = new ethers.AlchemyProvider('arbitrum-goerli', this.apiKey);    
+    return new ethers.Contract(address, abi, provider);
   }
 
-  toBN(_wei: string) {
-    return Web3.utils.toBN(_wei);
-  }
-
-  stopWalletProviderEngine() {
-    this.localKeyProvider.engine.stop();
+  toBN(value: string) {
+    return BigInt(value);
   }
 
   isAddress(address: string) {
-    return Web3.utils.isAddress(address);
+    return ethers.isAddress(address);
+  }
+
+  decodeLog(types: ReadonlyArray<string | ParamType>, data: ethers.BytesLike) {
+    return ethers.AbiCoder.defaultAbiCoder().decode(types, data);
   }
 }

@@ -203,7 +203,7 @@ export class TrackerService {
   // }
 
   async onSellerCommitted(event: any, blockHeight: number): Promise<void> {
-    console.log('Tracker: onSellerCommitted', event, blockHeight);
+    //console.log('Tracker: onSellerCommitted', event, blockHeight);
 
     const data = event.data.split('||');
     const sellerPartnerId = data[0].split('+')[0];
@@ -291,10 +291,12 @@ export class TrackerService {
   async validateIsItemInfoAndInspectSame(contractAddress: string): Promise<[boolean, string, ValidationResults]> {
     try {
       const contract = await this._getFactoryContract();
-  
-      const chainResults = await contract.methods.getTradeDetailsByAddress(contractAddress).call({ from: this.walletService.wallet.myAccount });
+      
+      //const chainResults = await contract.methods.getTradeDetailsByAddress(contractAddress).call({ from: this.walletService.wallet.myAccount });
+      const chainResults = await contract.getTradeDetailsByAddress(contractAddress);
+
       const onChainInfo = this._extractChainItemInfo(chainResults.skinInfo, chainResults.assetId);
-  
+     
       const steamResults = await this.floatService.getFloat(chainResults.inspectLink);
       const steamInfo = this._extractSteamItemInfo(steamResults.data.iteminfo);
   

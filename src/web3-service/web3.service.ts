@@ -15,7 +15,7 @@ export class Web3Service implements OnModuleInit {
   constructor(
     private db: DatabaseService,
     private tracker: TrackerService,
-    private signer: WalletService,
+    private walletService: WalletService,
   ) {
     this.createNewTradeEntry = this.createNewTradeEntry.bind(this);
     this.unifiedDatabaseAction = this.unifiedDatabaseAction.bind(this);
@@ -39,10 +39,7 @@ export class Web3Service implements OnModuleInit {
     this.onInitCurrentBlockHeight = await this.getCurrentBlockHeight();
     const lastKnownDbBlockHeight = await this.getLastKnownBlockHeight();
     if (this.onInitCurrentBlockHeight >= lastKnownDbBlockHeight) {
-      await this.warmupContractFactoryTopics(
-        lastKnownDbBlockHeight,
-        this.onInitCurrentBlockHeight,
-      );
+      this.getPastAlchemyLogs(lastKnownDbBlockHeight);
       this.logger.warn(
         `SystemStatus.WarmingUp | Behind on blocks | current ${this.onInitCurrentBlockHeight} vs last known: ${lastKnownDbBlockHeight}`,
       );
@@ -54,110 +51,70 @@ export class Web3Service implements OnModuleInit {
     }
   }
 
-  private async warmupContractFactoryTopics(
-    _blockHeight: number,
-    _toBlockHeight: number,
-  ) {
+  async getPastAlchemyLogs(_fromBlockHeight: number) { 
     const options = {
       address: environment.contractFactory.address,
       topics: [ContractFactoryTopics.statusChange],
-      fromBlock: _blockHeight,
-      toBlock: _toBlockHeight,
+      fromBlock: '0x0',
+      toBlock: 'latest',
     };
 
-    /** this.subscription = */ this.signer.wallet.web3.eth
-      .getPastLogs(options)
-      .then(async (logs) => {
-        // sort the logs based on their block height
-        logs.sort((a, b) => {
-          return a.blockNumber - b.blockNumber;
-        });
-
-        for (const log of logs) {
-          for (const _topic of log.topics) {
-            switch (_topic) {
-              case ContractFactoryTopics.statusChange:
-                await this._processStatusChangeTopic(log, log.blockNumber);
-                break;
-              default:
-                this.logger.warn(`NOT A DEFAULT LOG (${_topic}):`, log);
-                break;
-            }
-          }
+    await this.walletService.wallet.alchemy.core.getLogs(options).then(async (logs) => {
+      for await (const log of logs) {
+        switch(log.topics[0]) {
+          case ContractFactoryTopics.statusChange:
+            await this._processStatusChangeTopic(log, log.blockNumber);
+            break;
+          default:
+            this.logger.warn(`NOT A DEFAULT LOG (${log.topics[0]}):`, log);
+            break;
         }
-        const currentBlockHeight = await this.getCurrentBlockHeight();
+      }
 
-        if (currentBlockHeight > _toBlockHeight) {
-          // this.logger.warn(
-          //   `SystemStatus.NotReady | More Blocks Incoming | updated to: ${_toBlockHeight} vs current: ${currentBlockHeight}`,
-          // );
+      this.logger.log(
+        `SystemStatus.Ready | Blocks up to date | to block: #${_fromBlockHeight}`,
+      );
 
-          // await this.warmupContractFactoryTopics(
-          //   _blockHeight + 1,
-          //   currentBlockHeight,
-          // );
-        } else {
-          // this.logger.warn(
-          //   `SystemStatus.Ready | Blocks up to date | to block: #${_toBlockHeight}`,
-          // );
-          // this.listenToContractFactoryTopics(currentBlockHeight);
-        }
-        this.logger.warn(
-          `SystemStatus.Ready | Blocks up to date | to block: #${_toBlockHeight}`,
-        );
-        this.listenToContractFactoryTopics(_toBlockHeight);
-      })
-      .catch((error) => {
-        this.logger.error(`Error in warmupContractFactoryTopics:`, error);
-      });
+      this.listenToLogs(_fromBlockHeight);     
+
+    }).catch((error) => {
+      console.log('error', error);
+    });
   }
 
-  private async listenToContractFactoryTopics(_blockHeight: number) {
-    this.logger.warn(
-      `SystemStatus.Live | Listening to new events | from block: #${_blockHeight}`,
-    );
-    const options = {
+  async listenToLogs(_blockHeight: number) {
+    const hexBlockHeight = '0x' + _blockHeight.toString(16);
+    const filter = {
       address: environment.contractFactory.address,
       topics: [ContractFactoryTopics.statusChange],
-      fromBlock: _blockHeight,
+      fromBlock: hexBlockHeight,
     };
-    /** this.subscription = */ this.signer.wallet.web3.eth
-      .subscribe('logs', options, async (error, log) => {
-        if (error) {
-          console.log('error!', error);
-          return;
-        }
 
-        //console.log('daloggRrr', log);
-
-        for await (const _topic of log.topics) {
-          switch (_topic) {
-            case ContractFactoryTopics.statusChange:
-              await this._processStatusChangeTopic(log, _blockHeight);
-              break;
-            default:
-              this.logger.warn(`NOT A DEFAULT LOG (${_topic}):`, log);
-              break;
-          }
-        }
-      })
-      .on('data', (/*log*/) => {
-        //console.log(log);
-      });
+    this.walletService.wallet.alchemy.ws.on(filter, async (log, event)=>{
+      switch(log.topics[0]) {
+        case ContractFactoryTopics.statusChange:
+          await this._processStatusChangeTopic(log, log.blockNumber);
+          break;
+        default:
+          this.logger.warn(`NOT A DEFAULT LOG (${log.topics[0]}):`, log);
+          break;
+      }
+    });
   }
 
   private async _processStatusChangeTopic(log: any, _blockHeight: number) {
     try {
-      const statusChangeResult = this._decodeLog(StatusChangeEventValues, log);
-      await this._onStatusChange(statusChangeResult, _blockHeight);
+      const contract = this.walletService.wallet.connectContract(
+        environment.contractFactory.address,
+        environment.contractFactory.abi,
+      );
+      const decodedLog = contract.interface.parseLog(log);
+      
+      await this._onStatusChange(decodedLog, _blockHeight);
     } catch (error) {
       this.logger.error(`Error in _processStatusChangeTopic: ${log} | ${error}` );
       throw error;
     }
-  }
-
-  private _decodeLog(any: any[], log: any): any {
-    return this.signer.wallet.web3.eth.abi.decodeLog(any, log.data, log.topics);
   }
 
   /** Switch Status Change Event
@@ -167,6 +124,12 @@ export class Web3Service implements OnModuleInit {
    */
 
   private async _onStatusChange(event: any, _blockHeight: number) {
+    event.newStatus = event.args[1].toString();
+    event.contractAddress = event.args[0].toString();
+    event.data = event.args[2].toString();
+    event.sellerAddress = event.args[3].toString();
+    event.buyerAddress = event.args[4].toString();
+
     const statusHandlers: {
       [key in TradeStatus]?: (
         event: any,
@@ -235,6 +198,7 @@ export class Web3Service implements OnModuleInit {
   ): (event: any, _blockHeight: number) => Promise<void> {
     return async (event: any, _blockHeight: number) => {
       const result = await fn(event, _blockHeight); 
+      //console.log('result', result);      
       
       if (result && result.saved) {
         this.logger.log(
@@ -273,7 +237,7 @@ export class Web3Service implements OnModuleInit {
     );
   }
 
-  private async createNewTradeEntry(event: any, _blockHeight: number) {
+  private async createNewTradeEntry(event: any, _blockHeight: number) {    
     const [isValid, assetId, validationResults] =
       await this.tracker.validateIsItemInfoAndInspectSame(
         event.contractAddress,
@@ -309,11 +273,11 @@ export class Web3Service implements OnModuleInit {
     const result = await this.db.createOrReturn(newStore);
 
     if (!isValid) {
-      const currentStatus: TradeStatus = await this.signer.getTradeStatus(event.contractAddress);
+      const currentStatus: TradeStatus = await this.walletService.getTradeStatus(event.contractAddress);
       if(currentStatus != TradeStatus.Clawbacked && !result.saved){
         this.logger.warn(`[${event.contractAddress}] Item invalid: ${assetId}`);
         try {
-          this.signer.confirmTrade(event.contractAddress, false, 'INVALID_ITEM').then((res) => {
+          this.walletService.confirmTrade(event.contractAddress, false, 'INVALID_ITEM').then((res) => {
             this.logger.warn(`[${event.contractAddress}] Made TX to clawback: ${res.transactionHash}`);  
           }).catch((err) => {
             this.logger.error(`Catch 1: [${event.contractAddress}] Error in clawback send call (status ${currentStatus}): ${err}`);
@@ -342,14 +306,7 @@ export class Web3Service implements OnModuleInit {
   }
 
   private async handleBuyerCommitted(event: any, _blockHeight: number) {
-    const dataArray = event.data.split('||');
-    const _buyerTradeUrl = dataArray[1];
-
-    const result = await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus, {
-      buyerTradeUrl: _buyerTradeUrl,
-    });
-
-    //await this.tracker.onBuyerCommitted(event, _blockHeight);
+    const result = await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
 
     return result;
   }
@@ -359,7 +316,11 @@ export class Web3Service implements OnModuleInit {
   }
 
   private async handleSellerCommitted(event: any, _blockHeight: number) {
-    const result = await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus);
+    const dataArray = event.data.split('||');
+    const _buyerTradeUrl = dataArray[1];
+    const result = await this.unifiedDatabaseAction(event, _blockHeight, event.newStatus, {
+      buyerTradeUrl: _buyerTradeUrl,
+    });
     await this.tracker.onSellerCommitted(event, _blockHeight);
     return result;
   }
@@ -394,43 +355,15 @@ export class Web3Service implements OnModuleInit {
 
   /** Utils **/
 
-  private listenToEverythingOnChain() {
-    this.signer.wallet.web3.eth.subscribe('logs', {}, (error, result) => {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log(result);
-      }
-    });
-  }
-
   private async getLastKnownBlockHeight(): Promise<number> {
     const lastKnownBlockHeight = await this.db.fetchLastKnownBlock();
     return lastKnownBlockHeight;
   }
 
   private async getCurrentBlockHeight(): Promise<number> {
-    return await this.signer.wallet.web3.eth.getBlockNumber();
+    return await this.walletService.wallet.alchemy.core.getBlockNumber();
   }
 }
-
-const StatusChangeEventValues = [
-  {
-    type: 'address',
-    name: 'contractAddress',
-    indexed: false,
-  },
-  {
-    type: 'uint8',
-    name: 'newStatus',
-    indexed: false,
-  },
-  {
-    type: 'string',
-    name: 'data',
-    indexed: false,
-  },
-];
 
 enum ContractFactoryTopics {
   statusChange = '0x2c6c2c8fac99064b89e2a97cba30b9bce7b1a84a55e0310e16b56924c6ab2f45',
