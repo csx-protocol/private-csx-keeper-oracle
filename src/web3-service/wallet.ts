@@ -7,8 +7,10 @@ export class WalletBase {
   wallet: Wallet;
 
   private readonly apiKey: string;
+  private readonly privateKey: string;
   constructor(_privateKey: string, _apiKey: string) {
     this.apiKey = _apiKey;
+    this.privateKey = _privateKey;
     const settings = {
       apiKey: _apiKey,
       network: Network.ARB_GOERLI,
@@ -18,8 +20,9 @@ export class WalletBase {
   }
 
   async connectContract(address: string, abi: any) {
-    const provider = new ethers.AlchemyProvider('arbitrum-goerli', this.apiKey); 
-    const signer = await provider.getSigner();   
+    const provider = new ethers.AlchemyProvider('arbitrum-goerli', this.apiKey);
+    const wallet = new ethers.Wallet(this.privateKey, provider);
+    const signer = wallet.connect(provider);
     return new ethers.Contract(address, abi, signer);
   }
 
