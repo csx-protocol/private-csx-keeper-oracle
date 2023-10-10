@@ -111,7 +111,7 @@ export class Web3Service implements OnModuleInit {
         environment.contractFactory.address,
         environment.contractFactory.abi,
       );
-      const decodedLog = contract.interface.parseLog(log);
+      const decodedLog = (await contract).interface.parseLog(log);
       
       await this._onStatusChange(decodedLog, _blockHeight);
     } catch (error) {

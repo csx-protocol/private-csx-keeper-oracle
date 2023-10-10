@@ -15,25 +15,25 @@ export class WalletService {
     this.logger.log('WalletService dependencies injected');
   }
 
-  connectTradeContract(address: string) {
-    return this.wallet.connectContract(
+  async connectTradeContract(address: string) {
+    return await this.wallet.connectContract(
       address,
       environment.tradeContract.abi,
     );
   }
 
   async confirmTrade(contractAddress: any, isTradeMade: boolean, message: string) {
-    const contract = this.connectTradeContract(contractAddress);
+    const contract = await this.connectTradeContract(contractAddress);
     return await contract.keeperNodeConfirmsTrade(isTradeMade, message);
   }
 
   async getTradeStatus(contractAddress: any) {
-    const contract = this.connectTradeContract(contractAddress);
+    const contract = await this.connectTradeContract(contractAddress);
     return await contract.status();
   }
 
   async getfinalityResult(contractAddress: any) {
-    const contract = this.connectTradeContract(contractAddress);
+    const contract = await this.connectTradeContract(contractAddress);
     return await contract.finalityResult();
   }
 }

@@ -17,9 +17,10 @@ export class WalletBase {
     this.wallet = new Wallet(_privateKey, this.alchemy);
   }
 
-  connectContract(address: string, abi: any) {
-    const provider = new ethers.AlchemyProvider('arbitrum-goerli', this.apiKey);    
-    return new ethers.Contract(address, abi, provider);
+  async connectContract(address: string, abi: any) {
+    const provider = new ethers.AlchemyProvider('arbitrum-goerli', this.apiKey); 
+    const signer = await provider.getSigner();   
+    return new ethers.Contract(address, abi, signer);
   }
 
   toBN(value: string) {
