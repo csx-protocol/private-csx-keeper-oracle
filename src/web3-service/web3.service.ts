@@ -94,13 +94,17 @@ export class Web3Service implements OnModuleInit {
       const txHash = log.transactionHash;      
       const reciept = await this.walletService.wallet.alchemy.transact.waitForTransaction(txHash);
 
-      switch(log.topics[0]) {
-        case ContractFactoryTopics.statusChange:
-          await this._processStatusChangeTopic(log, log.blockNumber);
-          break;
-        default:
-          this.logger.warn(`NOT A DEFAULT LOG (${log.topics[0]}):`, log);
-          break;
+      if (reciept.status === 0) {
+        switch (log.topics[0]) {
+          case ContractFactoryTopics.statusChange:
+            await this._processStatusChangeTopic(log, log.blockNumber);
+            break;
+          default:
+            this.logger.warn(`NOT A DEFAULT LOG (${log.topics[0]}):`, log);
+            break;
+        }
+      } else {
+        this.logger.warn(`Transaction Failed: ${txHash} ${log.topics[0]}`);
       }
     });
   }
