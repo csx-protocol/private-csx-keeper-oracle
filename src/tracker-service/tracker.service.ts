@@ -220,6 +220,7 @@ export class TrackerService {
     const cEntity = await this.db.findByContractAddress(event.contractAddress);
 
     this.trackService.trackItem(
+      event.newStatus,
       event.contractAddress,
       sellerSteamId64,
       buyerSteamId64,

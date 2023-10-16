@@ -13,6 +13,7 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { FloatApiService } from '../float-api/float-api.service';
 import { WalletService } from '../web3-service/wallet.service';
+import { TradeStatus } from '../database/database/interface';
 
 @Injectable()
 export class TrackService {
@@ -38,6 +39,7 @@ export class TrackService {
 
   // To track an item
   public async trackItem(
+    status: TradeStatus,
     contractAddress: string,
     originId: string,
     destinationId: string,
@@ -103,12 +105,17 @@ export class TrackService {
         `[${contractAddress}] Start tracking item ${assetId} from ${originId} to ${destinationId}`,
       );
     } else {
-      this.logger.error(
-        `[${contractAddress}] No item with assetId ${assetId} found in the seller ${originId} inventory, no tracking stored.`,
-      );
-      // TODO: delist the item from the csx-market and refund buyer
-      // Check if contract status is already more than completed?
-      // If not, and if the status is seller committed, then refund buyer.
+      const currentStatus = await this.walletService.getTradeStatus(contractAddress);
+
+      console.log('currentStatus', currentStatus);
+      console.log('status', status);
+
+      if(status != currentStatus){
+        this.logger.error(
+          `[${contractAddress}] No item with assetId ${assetId} found in the seller ${originId} inventory, no tracking stored.`,
+        );
+        return;
+      }
     }
   }
 
