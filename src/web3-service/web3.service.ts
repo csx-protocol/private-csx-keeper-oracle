@@ -92,7 +92,7 @@ export class Web3Service implements OnModuleInit {
 
     this.walletService.wallet.alchemy.ws.on(filter, async (log, event)=>{
       const txHash = log.transactionHash;      
-      const reciept = await this.walletService.wallet.alchemy.transact.waitForTransaction(txHash);
+      const reciept = await this.walletService.wallet.alchemy.transact.waitForTransaction(txHash, 0);
 
       if (reciept.status === 0) {
         switch (log.topics[0]) {
@@ -104,7 +104,7 @@ export class Web3Service implements OnModuleInit {
             break;
         }
       } else {
-        this.logger.warn(`Transaction Failed: ${txHash} ${log.topics[0]}`);
+        this.logger.warn(`Transaction Failed: ${txHash} ${log.topics[0]}. Status: ${reciept.status}`);
       }
     });
   }
