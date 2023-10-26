@@ -419,15 +419,18 @@ export class TrackService {
     await this._checkTrackedItems();
   }
 
-  public removeTrackedItem(contractAddress: string): void {
+  public async removeTrackedItem(contractAddress: string): Promise<void> {
     this.logger.warn(
       `Removing tracked item with contract address: ${contractAddress}`,
     );
     this.trackedItems = this.trackedItems.filter(
-      (item) => item.contractAddress !== contractAddress,
+      (item) => item.contractAddress.toLowerCase() !== contractAddress.toLowerCase(),
     );
 
-    this.trackedItemsRepository.delete({ contractAddress });
+    const trackedItem = await this.trackedItemsRepository.findOne({
+      where: { contractAddress },
+    });
+    this.trackedItemsRepository.delete(trackedItem);
   }
 
   ///////////////////////////////////////////////////////////////

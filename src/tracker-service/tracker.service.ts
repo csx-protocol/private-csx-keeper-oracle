@@ -237,7 +237,7 @@ export class TrackerService {
   // }
 
   async removeTrackedItem(contractAddress: string): Promise<void> {
-    this.trackService.removeTrackedItem(contractAddress);
+    await this.trackService.removeTrackedItem(contractAddress);
   }
 
   // NEW NEW NEW NEW NEW NEW NEW NEW NEW 
