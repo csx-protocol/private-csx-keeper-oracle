@@ -282,7 +282,7 @@ export class Web3Service implements OnModuleInit {
 
     if (!isValid) {
       const currentStatus: TradeStatus = await this.walletService.getTradeStatus(event.contractAddress);
-      if(currentStatus != TradeStatus.Clawbacked && !result.saved){
+      if(currentStatus != TradeStatus.Clawbacked && result.saved){
         this.logger.warn(`[${event.contractAddress}] Item invalid: ${assetId}`);
         try {
           this.walletService.confirmTrade(event.contractAddress, false, 'INVALID_ITEM').then((res) => {
