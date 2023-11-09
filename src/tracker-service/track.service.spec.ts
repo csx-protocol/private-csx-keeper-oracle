@@ -51,7 +51,7 @@ describe('TrackService', () => {
     }).compile();
 
     service = module.get<TrackService>(TrackService);
-    if(isResetAllMocks) {
+    if (isResetAllMocks) {
       jest.resetAllMocks();
       service['trackedItems'] = [];
     }
@@ -98,7 +98,6 @@ describe('TrackService', () => {
   });
 
   describe('trackItem', () => {
-
     it('should not add item to track if the item does not exist', async () => {
       // Mock the expected inventory response
 
@@ -107,119 +106,119 @@ describe('TrackService', () => {
           assets: [
             {
               appid: 730,
-              contextid: "2",
-              assetid: "test-name-1",
-              classid: "test-class-1",
-              instanceid: "test-instance-1",
-              amount: "1"
+              contextid: '2',
+              assetid: 'test-name-1',
+              classid: 'test-class-1',
+              instanceid: 'test-instance-1',
+              amount: '1',
             },
             {
               appid: 730,
-              contextid: "2",
-              assetid: "test-name-2",
-              classid: "test-class-2",
-              instanceid: "test-instance-2",
-              amount: "2"
-            }
+              contextid: '2',
+              assetid: 'test-name-2',
+              classid: 'test-class-2',
+              instanceid: 'test-instance-2',
+              amount: '2',
+            },
           ],
           descriptions: [
             {
               appid: 730,
-              classid: "test-class-1",
-              instanceid: "test-instance-1",
+              classid: 'test-class-1',
+              instanceid: 'test-instance-1',
               currency: 0,
-              background_color: "#ffffff",
-              icon_url: "http://example.com/icon.png",
-              icon_url_large: "http://example.com/icon_large.png",
+              background_color: '#ffffff',
+              icon_url: 'http://example.com/icon.png',
+              icon_url_large: 'http://example.com/icon_large.png',
               descriptions: [
                 {
-                  type: "TypeA",
-                  value: "ValueA",
-                  color: "#000000"
-                }
+                  type: 'TypeA',
+                  value: 'ValueA',
+                  color: '#000000',
+                },
               ],
               tradable: 1,
               actions: [
                 {
-                  link: "http://example.com/link",
-                  name: "Inspect in Game..."
-                }
+                  link: 'http://example.com/link',
+                  name: 'Inspect in Game...',
+                },
               ],
-              name: "NameA",
-              name_color: "#ff0000",
-              type: "TypeA",
-              market_name: "MarketNameA",
-              market_hash_name: "test-name-1",
+              name: 'NameA',
+              name_color: '#ff0000',
+              type: 'TypeA',
+              market_name: 'MarketNameA',
+              market_hash_name: 'test-name-1',
               market_actions: [
                 {
-                  link: "http://example.com/market_link",
-                  name: "MarketActionName"
-                }
+                  link: 'http://example.com/market_link',
+                  name: 'MarketActionName',
+                },
               ],
               commodity: 1,
               market_tradable_restriction: 0,
               marketable: 1,
               tags: [
                 {
-                  category: "CategoryA",
-                  internal_name: "InternalNameA",
-                  localized_category_name: "LocalizedCategoryNameA",
-                  localized_tag_name: "LocalizedTagNameA",
-                  color: "#00ff00"
-                }
-              ]
+                  category: 'CategoryA',
+                  internal_name: 'InternalNameA',
+                  localized_category_name: 'LocalizedCategoryNameA',
+                  localized_tag_name: 'LocalizedTagNameA',
+                  color: '#00ff00',
+                },
+              ],
             },
             {
               appid: 730,
-              classid: "test-class-2",
-              instanceid: "test-instance-2",
+              classid: 'test-class-2',
+              instanceid: 'test-instance-2',
               currency: 0,
-              background_color: "#ffffff",
-              icon_url: "http://example.com/icon2.png",
-              icon_url_large: "http://example.com/icon_large2.png",
+              background_color: '#ffffff',
+              icon_url: 'http://example.com/icon2.png',
+              icon_url_large: 'http://example.com/icon_large2.png',
               descriptions: [
                 {
-                type: "TypeB",
-                value: "ValueB",
-                color: "#ff00ff"
-                }
+                  type: 'TypeB',
+                  value: 'ValueB',
+                  color: '#ff00ff',
+                },
               ],
               tradable: 1,
               actions: [
                 {
-                link: "http://example.com/link2",
-                name: "Inspect in Game..."
-                }
+                  link: 'http://example.com/link2',
+                  name: 'Inspect in Game...',
+                },
               ],
-              name: "NameB",
-              name_color: "#00ff00",
-              type: "TypeB",
-              market_name: "MarketNameB",
-              market_hash_name: "test-name-2",
+              name: 'NameB',
+              name_color: '#00ff00',
+              type: 'TypeB',
+              market_name: 'MarketNameB',
+              market_hash_name: 'test-name-2',
               market_actions: [
                 {
-                  link: "http://example.com/market_link2",
-                  name: "MarketActionNameB"
-                }
+                  link: 'http://example.com/market_link2',
+                  name: 'MarketActionNameB',
+                },
               ],
               commodity: 1,
               market_tradable_restriction: 0,
               marketable: 1,
               tags: [
                 {
-                  category: "CategoryB",
-                  internal_name: "InternalNameB",
-                  localized_category_name: "LocalizedCategoryNameB",
-                  localized_tag_name: "LocalizedTagNameB",
-                  color: "#ff00ff"
-                }
-              ]
-            }
+                  category: 'CategoryB',
+                  internal_name: 'InternalNameB',
+                  localized_category_name: 'LocalizedCategoryNameB',
+                  localized_tag_name: 'LocalizedTagNameB',
+                  color: '#ff00ff',
+                },
+              ],
+            },
           ],
           total_inventory_count: 2,
           success: 1,
-          rwgrsn: -2
-        }
+          rwgrsn: -2,
+        },
       ];
 
       // Mock the STEAMAPIS_KEY
@@ -227,11 +226,26 @@ describe('TrackService', () => {
 
       // Mock the expected inventory response
       mockHttpService.get.mockReturnValue(of({ data: mockOriginInventory[0] }));
- 
-      // Wait for the async initialization if isResetAllMocks is true 
+
+      // Wait for the async initialization if isResetAllMocks is true
       //await service['_loadTrackedItems']();
- 
-      await service.trackItem(TradeStatus.SellerCommitted, '0x00', '76561198185748194', '76561198249128626', 'test-name-404', 0.01, 100, 10);
+
+      /**
+       * trackItem(sellerAddress: string, status: TradeStatus, contractAddress: string, originId: string, destinationId: string, assetId: string, _itemMarketName: string, _floatValue: number, _paintSeed: number, _paintIndex: number): Promise<void>
+       */
+
+      await service.trackItem(
+        '0x00',
+        TradeStatus.SellerCommitted,
+        '0x00',
+        'testid1',
+        'testid2',
+        'test-name-3',
+        'test-name-3',
+        0.01,
+        100,
+        10,
+      );
 
       expect(service['trackedItems']).toHaveLength(0);
     });
@@ -244,119 +258,119 @@ describe('TrackService', () => {
           assets: [
             {
               appid: 730,
-              contextid: "2",
-              assetid: "test-name-1",
-              classid: "test-class-1",
-              instanceid: "test-instance-1",
-              amount: "1"
+              contextid: '2',
+              assetid: 'test-name-1',
+              classid: 'test-class-1',
+              instanceid: 'test-instance-1',
+              amount: '1',
             },
             {
               appid: 730,
-              contextid: "2",
-              assetid: "test-name-2",
-              classid: "test-class-2",
-              instanceid: "test-instance-2",
-              amount: "2"
-            }
+              contextid: '2',
+              assetid: 'test-name-2',
+              classid: 'test-class-2',
+              instanceid: 'test-instance-2',
+              amount: '2',
+            },
           ],
           descriptions: [
             {
               appid: 730,
-              classid: "test-class-1",
-              instanceid: "test-instance-1",
+              classid: 'test-class-1',
+              instanceid: 'test-instance-1',
               currency: 0,
-              background_color: "#ffffff",
-              icon_url: "http://example.com/icon.png",
-              icon_url_large: "http://example.com/icon_large.png",
+              background_color: '#ffffff',
+              icon_url: 'http://example.com/icon.png',
+              icon_url_large: 'http://example.com/icon_large.png',
               descriptions: [
                 {
-                  type: "TypeA",
-                  value: "ValueA",
-                  color: "#000000"
-                }
+                  type: 'TypeA',
+                  value: 'ValueA',
+                  color: '#000000',
+                },
               ],
               tradable: 1,
               actions: [
                 {
-                  link: "http://example.com/link",
-                  name: "Inspect in Game..."
-                }
+                  link: 'http://example.com/link',
+                  name: 'Inspect in Game...',
+                },
               ],
-              name: "NameA",
-              name_color: "#ff0000",
-              type: "TypeA",
-              market_name: "MarketNameA",
-              market_hash_name: "test-name-1",
+              name: 'NameA',
+              name_color: '#ff0000',
+              type: 'TypeA',
+              market_name: 'MarketNameA',
+              market_hash_name: 'test-name-1',
               market_actions: [
                 {
-                  link: "http://example.com/market_link",
-                  name: "MarketActionName"
-                }
+                  link: 'http://example.com/market_link',
+                  name: 'MarketActionName',
+                },
               ],
               commodity: 1,
               market_tradable_restriction: 0,
               marketable: 1,
               tags: [
                 {
-                  category: "CategoryA",
-                  internal_name: "InternalNameA",
-                  localized_category_name: "LocalizedCategoryNameA",
-                  localized_tag_name: "LocalizedTagNameA",
-                  color: "#00ff00"
-                }
-              ]
+                  category: 'CategoryA',
+                  internal_name: 'InternalNameA',
+                  localized_category_name: 'LocalizedCategoryNameA',
+                  localized_tag_name: 'LocalizedTagNameA',
+                  color: '#00ff00',
+                },
+              ],
             },
             {
               appid: 730,
-              classid: "test-class-2",
-              instanceid: "test-instance-2",
+              classid: 'test-class-2',
+              instanceid: 'test-instance-2',
               currency: 0,
-              background_color: "#ffffff",
-              icon_url: "http://example.com/icon2.png",
-              icon_url_large: "http://example.com/icon_large2.png",
+              background_color: '#ffffff',
+              icon_url: 'http://example.com/icon2.png',
+              icon_url_large: 'http://example.com/icon_large2.png',
               descriptions: [
                 {
-                type: "TypeB",
-                value: "ValueB",
-                color: "#ff00ff"
-                }
+                  type: 'TypeB',
+                  value: 'ValueB',
+                  color: '#ff00ff',
+                },
               ],
               tradable: 1,
               actions: [
                 {
-                link: "http://example.com/link2",
-                name: "Inspect in Game..."
-                }
+                  link: 'http://example.com/link2',
+                  name: 'Inspect in Game...',
+                },
               ],
-              name: "NameB",
-              name_color: "#00ff00",
-              type: "TypeB",
-              market_name: "MarketNameB",
-              market_hash_name: "test-name-2",
+              name: 'NameB',
+              name_color: '#00ff00',
+              type: 'TypeB',
+              market_name: 'MarketNameB',
+              market_hash_name: 'test-name-2',
               market_actions: [
                 {
-                  link: "http://example.com/market_link2",
-                  name: "MarketActionNameB"
-                }
+                  link: 'http://example.com/market_link2',
+                  name: 'MarketActionNameB',
+                },
               ],
               commodity: 1,
               market_tradable_restriction: 0,
               marketable: 1,
               tags: [
                 {
-                  category: "CategoryB",
-                  internal_name: "InternalNameB",
-                  localized_category_name: "LocalizedCategoryNameB",
-                  localized_tag_name: "LocalizedTagNameB",
-                  color: "#ff00ff"
-                }
-              ]
-            }
+                  category: 'CategoryB',
+                  internal_name: 'InternalNameB',
+                  localized_category_name: 'LocalizedCategoryNameB',
+                  localized_tag_name: 'LocalizedTagNameB',
+                  color: '#ff00ff',
+                },
+              ],
+            },
           ],
           total_inventory_count: 2,
           success: 1,
-          rwgrsn: -2
-        }
+          rwgrsn: -2,
+        },
       ];
 
       // Mock the STEAMAPIS_KEY
@@ -365,11 +379,22 @@ describe('TrackService', () => {
       // Mock the expected inventory response
       mockHttpService.get.mockReturnValue(of({ data: mockOriginInventory[0] }));
 
-      // Wait for the async initialization if isResetAllMocks is true 
+      // Wait for the async initialization if isResetAllMocks is true
       //await service['_loadTrackedItems']();
 
-      await service.trackItem(TradeStatus.SellerCommitted, '0x00', '76561198185748194', '76561198249128626', 'test-name-1', 0.01, 100, 10);
-        
+      await service.trackItem(
+        '0x00',
+        TradeStatus.SellerCommitted,
+        '0x00',
+        'testid1',
+        'testid2',
+        'test-name-3',
+        'test-name-3',
+        0.01,
+        100,
+        10,
+      );
+
       // Assert that the item was added to the trackedItems array
       expect(service['trackedItems']).toHaveLength(1);
     });

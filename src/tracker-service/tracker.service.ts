@@ -74,9 +74,9 @@ export class TrackerService {
 
   // on BuyerCommitted:
   // Check if data on-chain and inspect url is the same. ---> If not, cancel trade and refund.
-  
+
   // Check if assetId is present in seller inventory. ---> If not, cancel trade and refund.
-  // If Present: 
+  // If Present:
   //  Snapshot inventory of buyer (check if buyer has market_hash_name with the same float details and remember the count).
 
   // on BuyerCancelled:
@@ -105,11 +105,10 @@ export class TrackerService {
 
   //   //Validate if buyer inv is public?
 
-
   //   //
   //   // const [isValid, assetId, validationResults] = await this.validateIsItemInfoAndInspectSame(event.contractAddress);
   //   // console.log('Validation Results', validationResults);
-    
+
   //   // if (!isValid) {
   //   //   this.logger.warn('Item is not valid, cancel trade and refund');
   //   //   // TODO: Cancel Trade and Refund call here.
@@ -139,8 +138,6 @@ export class TrackerService {
   //   // originId = seller SteamId64
   //   // destinationId = buyer SteamId64
   //   // assetId = item's assetId in seller inventory
-    
-    
 
   //   // TODO: Implement method
 
@@ -242,7 +239,7 @@ export class TrackerService {
     await this.trackService.removeTrackedItem(contractAddress);
   }
 
-  // NEW NEW NEW NEW NEW NEW NEW NEW NEW 
+  // NEW NEW NEW NEW NEW NEW NEW NEW NEW
 
   // on BuyerCommitted:
   // (here) Check if data on-chain and inspect url is the same. ---> If not, cancel trade and refund.
@@ -285,57 +282,74 @@ export class TrackerService {
   // Remove trackedItem from in-memory list.
   // Remove trackedItem from db.
 
-  // ENDOFNEW ENDOFNEW ENDOFNEW ENDOFNEW 
+  // ENDOFNEW ENDOFNEW ENDOFNEW ENDOFNEW
 
   /**
    * Validates if the item info from the contract is the same as the item info from the inspect url.
    */
 
-  async validateIsItemInfoAndInspectSame(contractAddress: string): Promise<[boolean, string, ValidationResults]> {
+  async validateIsItemInfoAndInspectSame(
+    contractAddress: string,
+  ): Promise<[boolean, string, ValidationResults]> {
     try {
       const contract = await this._getFactoryContract();
-      
-      //const chainResults = await contract.methods.getTradeDetailsByAddress(contractAddress).call({ from: this.walletService.wallet.myAccount });
-      const chainResults = await contract.getTradeDetailsByAddress(contractAddress);
 
-      const onChainInfo = this._extractChainItemInfo(chainResults.skinInfo, chainResults.assetId);
-     
-      const steamResults = await this.floatService.getFloat(chainResults.inspectLink);
+      //const chainResults = await contract.methods.getTradeDetailsByAddress(contractAddress).call({ from: this.walletService.wallet.myAccount });
+      const chainResults = await contract.getTradeDetailsByAddress(
+        contractAddress,
+      );
+
+      const onChainInfo = this._extractChainItemInfo(
+        chainResults.skinInfo,
+        chainResults.assetId,
+      );
+
+      const steamResults = await this.floatService.getFloat(
+        chainResults.inspectLink,
+      );
       const steamInfo = this._extractSteamItemInfo(steamResults.data.iteminfo);
-  
+
       const validationResults = this._validateItemInfo(onChainInfo, steamInfo);
-  
+
       //console.log(`Item validation results: ${JSON.stringify(validationResults, null, 2)}`);
-  
-      const isValid = Object.values(validationResults).every((result: ValidationResult) => result.isEqual);
-  
+
+      const isValid = Object.values(validationResults).every(
+        (result: ValidationResult) => result.isEqual,
+      );
+
       //console.log(`Item validation result: ${isValid ? 'Valid' : 'Invalid'}`);
       return [isValid, chainResults.assetId, validationResults];
     } catch (error) {
-      this.logger.error(`Failed to validate item ${contractAddress} trying again`, error);
+      this.logger.error(
+        `Failed to validate item ${contractAddress} trying again`,
+        error,
+      );
       this.validateIsItemInfoAndInspectSame(contractAddress);
     }
   }
-  
+
   private _extractChainItemInfo(skinInfo: any, assetId: string): ItemInfo {
     return {
       floatValue: JSON.parse(skinInfo.floatValues)[2],
       paintSeed: parseInt(skinInfo.paintSeed, 10),
       paintIndex: parseInt(skinInfo.paintIndex, 10),
-      assetId: parseInt(assetId, 10)
+      assetId: parseInt(assetId, 10),
     };
   }
-  
+
   private _extractSteamItemInfo(itemInfo: any): ItemInfo {
     return {
       floatValue: itemInfo.floatvalue,
       paintSeed: itemInfo.paintseed,
       paintIndex: itemInfo.paintindex,
-      assetId: itemInfo.a
+      assetId: itemInfo.a,
     };
   }
-  
-  private _validateItemInfo(onChainInfo: ItemInfo, steamInfo: ItemInfo): ValidationResults {
+
+  private _validateItemInfo(
+    onChainInfo: ItemInfo,
+    steamInfo: ItemInfo,
+  ): ValidationResults {
     return {
       floatValue: {
         isEqual: onChainInfo.floatValue === steamInfo.floatValue,
@@ -354,7 +368,7 @@ export class TrackerService {
       },
     };
   }
-  
+
   private async _getFactoryContract() {
     return this.walletService.wallet.connectContract(
       envWeb3.contractFactory.address,

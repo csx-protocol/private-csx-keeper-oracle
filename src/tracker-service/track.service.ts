@@ -49,6 +49,7 @@ export class TrackService {
     _floatValue: number,
     _paintSeed: number,
     _paintIndex: number,
+    _sellerAddress: string,
   ): Promise<void> {
     this.logger.log(
       'trackItem',
@@ -105,6 +106,7 @@ export class TrackService {
         similarItemsCount: destinationSimilarItemsCount,
         state: ItemState.TRACKING_SELLER,
         contractAddress: contractAddress,
+        sellerAddress: _sellerAddress,
       });
 
       await this.trackedItemsRepository.save(trackedItem);
@@ -142,6 +144,7 @@ export class TrackService {
     _floatValue: number,
     _paintSeed: number,
     _paintIndex: number,
+    _sellerAddress: string,
   ) {
     this.logger.log(
       'trackItem with api',
@@ -166,6 +169,7 @@ export class TrackService {
       similarItemsCount: -2,
       state: ItemState.TRACKING_API,
       contractAddress: contractAddress,
+      sellerAddress: _sellerAddress,
     });
 
     await this.trackedItemsRepository.save(trackedItem);
@@ -191,11 +195,8 @@ export class TrackService {
     _paintIndex: number,
   ) {
     const apiUser = await this.sDB.getUser(sellerAddress);
-    console.log('sellerAddress', sellerAddress);    
     this.logger.log('apiUser', apiUser);
-    console.log('apiUser', apiUser);    
     if (!apiUser.error && apiUser.data.apiKey) {
-
       const isApiKeyValid = await this.sDB.isApiKeyValid(apiUser.data.apiKey);
 
       if (!isApiKeyValid) {
@@ -208,6 +209,7 @@ export class TrackService {
           _floatValue,
           _paintSeed,
           _paintIndex,
+          sellerAddress,
         );
       } else {
         this._trackItemWithApi(
@@ -219,8 +221,9 @@ export class TrackService {
           _floatValue,
           _paintSeed,
           _paintIndex,
+          sellerAddress,
         );
-      }      
+      }
     } else {
       this._trackItemWithoutApi(
         status,
@@ -231,6 +234,7 @@ export class TrackService {
         _floatValue,
         _paintSeed,
         _paintIndex,
+        sellerAddress,
       );
     }
   }
@@ -335,15 +339,17 @@ export class TrackService {
 
   private async __checkApiTrade(trackedItem: TrackedItem): Promise<void> {
     const isTradeMadeBody: isTradeMadeBody = {
-      senderAddress: trackedItem.originId,
+      senderAddress: trackedItem.sellerAddress,
       senderAssetId: trackedItem.assetId,
       recipientSteamId64: trackedItem.destinationId,
     };
     const isTradeMade: isResponseDto = await this.isApiTradeMade(
       isTradeMadeBody,
     );
-    if(isTradeMade.error) {
-      this.logger.error(`Error in __checkApiTrade: ${isTradeMade.error} id: ${trackedItem.id}`);
+    if (isTradeMade.error) {
+      this.logger.error(
+        `Error in __checkApiTrade: ${isTradeMade.error} id: ${trackedItem.id}`,
+      );
       return;
     }
     if (isTradeMade.is) {

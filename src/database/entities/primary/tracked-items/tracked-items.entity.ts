@@ -48,4 +48,7 @@ export class TrackedItem {
 
   @Column()
   contractAddress: string;
+
+  @Column()
+  sellerAddress: string;
 }
