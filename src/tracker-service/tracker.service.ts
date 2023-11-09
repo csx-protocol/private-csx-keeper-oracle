@@ -219,9 +219,10 @@ export class TrackerService {
 
     const cEntity = await this.pDB.findByContractAddress(event.contractAddress);
 
-    console.log('event seller?', event.seller);
+    console.log('event?', event);
     this.logger.error(`event seller? ${event.seller}`);
-    
+    //event seller? undefined
+
     this.trackService.trackItem(
       event.seller,
       event.newStatus,
