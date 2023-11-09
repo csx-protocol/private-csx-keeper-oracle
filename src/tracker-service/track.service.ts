@@ -8,12 +8,13 @@ import { Repository } from 'typeorm';
 import {
   ItemState,
   TrackedItem,
-} from '../database/entities/tracked-items/tracked-items.entity';
-import { AxiosError, AxiosResponse } from 'axios';
+} from '../database/entities/primary/tracked-items/tracked-items.entity';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { FloatApiService } from '../float-api/float-api.service';
 import { WalletService } from '../web3-service/wallet.service';
-import { TradeStatus } from '../database/database/interface';
+import { TradeStatus } from '../database/database/primary/interface';
+import { SecondaryDatabaseService } from '../database/database/secondary/secondary-database.service';
 
 @Injectable()
 export class TrackService {
@@ -23,8 +24,9 @@ export class TrackService {
   constructor(
     private readonly httpService: HttpService,
     private readonly config: ConfigService,
-    @InjectRepository(TrackedItem)
+    @InjectRepository(TrackedItem, 'primaryConnection')
     private readonly trackedItemsRepository: Repository<TrackedItem>,
+    private readonly sDB: SecondaryDatabaseService,
     private readonly floatService: FloatApiService,
     private readonly walletService: WalletService,
   ) {
@@ -38,7 +40,7 @@ export class TrackService {
   }
 
   // To track an item
-  public async trackItem(
+  private async _trackItemWithoutApi(
     status: TradeStatus,
     contractAddress: string,
     originId: string,
@@ -59,11 +61,20 @@ export class TrackService {
       _paintIndex,
     );
 
-    const originInventory = await this._getInventory(originId, `'trackItem:' ${originId}`);
+    const originInventory = await this._getInventory(
+      originId,
+      `'trackItem:' ${originId}`,
+    );
 
     if (originInventory === 'INVENTORY_PRIVATE') {
-      this.logger.error(`Inventory for originId ${originId} is private. Cannot proceed.`);
-      return await this.walletService.confirmTrade(contractAddress, false, 'SELLER_INVENTORY_PRIVATE');
+      this.logger.error(
+        `Inventory for originId ${originId} is private. Cannot proceed.`,
+      );
+      return await this.walletService.confirmTrade(
+        contractAddress,
+        false,
+        'SELLER_INVENTORY_PRIVATE',
+      );
     }
 
     const item = originInventory.find(
@@ -105,17 +116,119 @@ export class TrackService {
         `[${contractAddress}] Start tracking item ${assetId} from ${originId} to ${destinationId}`,
       );
     } else {
-      const currentStatus = await this.walletService.getTradeStatus(contractAddress);
+      const currentStatus = await this.walletService.getTradeStatus(
+        contractAddress,
+      );
 
       console.log('currentStatus', currentStatus);
       console.log('status', status);
 
-      if(status != currentStatus){
+      if (status != currentStatus) {
         this.logger.error(
           `[${contractAddress}] No item with assetId ${assetId} found in the seller ${originId} inventory, no tracking stored.`,
         );
         return;
       }
+    }
+  }
+
+  // To track an item with api key
+  private async _trackItemWithApi(
+    contractAddress: string,
+    originId: string,
+    destinationId: string,
+    assetId: string,
+    _itemMarketName: string,
+    _floatValue: number,
+    _paintSeed: number,
+    _paintIndex: number,
+  ) {
+    this.logger.log(
+      'trackItem with api',
+      contractAddress,
+      originId,
+      destinationId,
+      assetId,
+      _floatValue,
+      _paintSeed,
+      _paintIndex,
+    );
+    const trackedItem = this.trackedItemsRepository.create({
+      originId,
+      destinationId,
+      assetId,
+      market_hash_name: _itemMarketName,
+      details: {
+        floatValue: _floatValue,
+        paintSeed: _paintSeed,
+        paintIndex: _paintIndex,
+      },
+      similarItemsCount: -2,
+      state: ItemState.TRACKING_API,
+      contractAddress: contractAddress,
+    });
+
+    await this.trackedItemsRepository.save(trackedItem);
+
+    // Add the tracked item to the in-memory list
+    this.trackedItems.push(trackedItem);
+
+    this.logger.log(
+      `[${contractAddress}] Start api tracking item ${assetId} from ${originId} to ${destinationId}`,
+    );
+  }
+
+  public async trackItem(
+    sellerAddress: string,
+    status: TradeStatus,
+    contractAddress: string,
+    originId: string,
+    destinationId: string,
+    assetId: string,
+    _itemMarketName: string,
+    _floatValue: number,
+    _paintSeed: number,
+    _paintIndex: number,
+  ) {
+    const apiUser = await this.sDB.getUser(sellerAddress);
+    if (!apiUser.error && apiUser.data.apiKey) {
+
+      const isApiKeyValid = await this.sDB.isApiKeyValid(apiUser.data.apiKey);
+
+      if (!isApiKeyValid) {
+        this._trackItemWithoutApi(
+          status,
+          contractAddress,
+          originId,
+          destinationId,
+          assetId,
+          _floatValue,
+          _paintSeed,
+          _paintIndex,
+        );
+      } else {
+        this._trackItemWithApi(
+          contractAddress,
+          originId,
+          destinationId,
+          assetId,
+          _itemMarketName,
+          _floatValue,
+          _paintSeed,
+          _paintIndex,
+        );
+      }      
+    } else {
+      this._trackItemWithoutApi(
+        status,
+        contractAddress,
+        originId,
+        destinationId,
+        assetId,
+        _floatValue,
+        _paintSeed,
+        _paintIndex,
+      );
     }
   }
 
@@ -151,6 +264,9 @@ export class TrackService {
           case ItemState.TRACKING_BUYER:
             await this.__checkBuyerInventory(trackedItem);
             break;
+          case ItemState.TRACKING_API:
+            await this.__checkApiTrade(trackedItem);
+            break;
         }
       } catch (error) {
         this.logger.error(
@@ -168,7 +284,10 @@ export class TrackService {
   private async __checkSellerInventory(
     trackedItem: TrackedItem,
   ): Promise<void> {
-    const originInventory = await this._getInventory(trackedItem.originId, `'__checkSellerInventory': ${trackedItem.id}`);
+    const originInventory = await this._getInventory(
+      trackedItem.originId,
+      `'__checkSellerInventory': ${trackedItem.id}`,
+    );
 
     const item = originInventory.find(
       (item: { assetid: string }) => item.assetid === trackedItem.assetId,
@@ -196,11 +315,11 @@ export class TrackService {
       trackedItem.details.paintIndex,
     );
 
-    // 
-    if (similarItemsInTargetInventory === -1){
-      console.log('Inventory is private');      
+    //
+    if (similarItemsInTargetInventory === -1) {
+      console.log('Inventory is private');
     }
-      //return this._confirmTrade(trackedItem, true); // TODO: handle this case (-1 = inv private), by dismissing check buyer's inventory in the _checkTrackedItems() method;
+    //return this._confirmTrade(trackedItem, true); // TODO: handle this case (-1 = inv private), by dismissing check buyer's inventory in the _checkTrackedItems() method;
 
     if (similarItemsInTargetInventory > trackedItem.similarItemsCount) {
       this.logger.log(
@@ -211,8 +330,34 @@ export class TrackService {
     }
   }
 
-  _confirmTrade(trackedItem: TrackedItem, veridict: boolean, message: string) {
-    try {      
+  private async __checkApiTrade(trackedItem: TrackedItem): Promise<void> {
+    const isTradeMadeBody: isTradeMadeBody = {
+      senderAddress: trackedItem.originId,
+      senderAssetId: trackedItem.assetId,
+      recipientSteamId64: trackedItem.destinationId,
+    };
+    const isTradeMade: isResponseDto = await this.isApiTradeMade(
+      isTradeMadeBody,
+    );
+    if(isTradeMade.error) {
+      this.logger.error(`Error in __checkApiTrade: ${isTradeMade.error} id: ${trackedItem.id}`);
+      return;
+    }
+    if (isTradeMade.is) {
+      this.logger.log(
+        `Item ${trackedItem.id} has moved from ${trackedItem.originId} to ${trackedItem.destinationId}.`,
+      );
+      // Release the item from the csx-market
+      this._confirmTrade(trackedItem, true, 'DELIVERED');
+    }
+  }
+
+  private _confirmTrade(
+    trackedItem: TrackedItem,
+    veridict: boolean,
+    message: string,
+  ) {
+    try {
       this.walletService
         .confirmTrade(trackedItem.contractAddress, veridict, message)
         .then((res) => {
@@ -222,7 +367,10 @@ export class TrackService {
           this.logger.log(res);
         })
         .catch((error) => {
-          this.logger.error(`Error confirming trade ${trackedItem.contractAddress}: ${trackedItem.id}`, error);
+          this.logger.error(
+            `Error confirming trade ${trackedItem.contractAddress}: ${trackedItem.id}`,
+            error,
+          );
           this.logger.error(error);
         });
     } catch (error) {
@@ -239,9 +387,13 @@ export class TrackService {
       }
    */
 
-  private inventoryCache: { [key: string]: { timestamp: number; data: any } } = {};
+  private inventoryCache: { [key: string]: { timestamp: number; data: any } } =
+    {};
   private ongoingRequests: Map<string, Promise<any>> = new Map();
-  private async _getInventory(_steamId64: string, callerName: string): Promise<any> {
+  private async _getInventory(
+    _steamId64: string,
+    callerName: string,
+  ): Promise<any> {
     this.logger.warn(`_getInventory() called by ${callerName}`);
     const currentTimestamp = Date.now();
 
@@ -294,7 +446,10 @@ export class TrackService {
         return 'INVENTORY_PRIVATE';
       }
 
-      const { data } = response as unknown as AxiosResponse<InventoryResponse, any>;
+      const { data } = response as unknown as AxiosResponse<
+        InventoryResponse,
+        any
+      >;
 
       const merged = [];
       for (const _asset of data.assets) {
@@ -363,7 +518,10 @@ export class TrackService {
     targetPaintSeed: number,
     targetPaintIndex: number,
   ): Promise<number> {
-    const targetInventory = await this._getInventory(destinationId, `_getSimilarItemsCount ${destinationId}`);
+    const targetInventory = await this._getInventory(
+      destinationId,
+      `_getSimilarItemsCount ${destinationId}`,
+    );
 
     if (targetInventory === 'INVENTORY_PRIVATE') return -1; // TODO: handle this case, by dismissing check buyer's inventory in the _checkTrackedItems() method;
 
@@ -424,13 +582,21 @@ export class TrackService {
       `Removing tracked item with contract address: ${contractAddress}`,
     );
     this.trackedItems = this.trackedItems.filter(
-      (item) => item.contractAddress.toLowerCase() !== contractAddress.toLowerCase(),
+      (item) =>
+        item.contractAddress.toLowerCase() !== contractAddress.toLowerCase(),
     );
 
     const trackedItem = await this.trackedItemsRepository.findOne({
       where: { contractAddress },
     });
-    this.trackedItemsRepository.delete(trackedItem);
+
+    if (trackedItem != null) {
+      this.trackedItemsRepository.delete(trackedItem);
+    } else {
+      this.logger.error(
+        `Tracked item with contract address: ${contractAddress} not found.`,
+      );
+    }
   }
 
   ///////////////////////////////////////////////////////////////
@@ -447,6 +613,109 @@ export class TrackService {
   // }
 
   ///////////////////////////////////////////////////////////////
+
+  async isApiTradeMade(body: isTradeMadeBody): Promise<isResponseDto> {
+    try {
+      const userResponse = await this.sDB.getUser(body.senderAddress);
+
+      if (userResponse.error) {
+        return {
+          is: false,
+          error: userResponse.error,
+        } as isResponseDto;
+      }
+
+      const apiKey = userResponse.data.apiKey;
+
+      // const isApiKeyValid = await this.sDB.isApiKeyValid(apiKey);
+
+      // if (!isApiKeyValid) {
+      //   return {
+      //     is: false,
+      //     error: 'API_KEY_INVALID',
+      //   } as isResponseDto;
+      // }
+
+      const offersResponse = await axios.get(
+        'https://api.steampowered.com/IEconService/GetTradeOffers/v1/',
+        {
+          params: {
+            key: apiKey,
+            get_sent_offers: true,
+            get_received_offers: true,
+            active_only: false,
+            historical_only: true,
+            language: 'en_us',
+          },
+        },
+      );
+
+      const sentOffers = offersResponse.data.response.trade_offers_sent;
+      const receivedOffers = offersResponse.data.response.trade_offers_received;
+
+      const matchingSentOffer = await this._findMatchingOffer(
+        sentOffers,
+        body.senderAssetId,
+        body.recipientSteamId64,
+      );
+      const matchingReceivedOffer = await this._findMatchingOffer(
+        receivedOffers,
+        body.senderAssetId,
+        body.recipientSteamId64,
+      );
+
+      if (matchingSentOffer || matchingReceivedOffer) {
+        return {
+          is: true,
+        } as isResponseDto;
+      } else {
+        return {
+          is: false,
+        } as isResponseDto;
+      }
+    } catch (error) {
+      return {
+        is: false,
+        error: error.message,
+      } as isResponseDto;
+    }
+  }
+
+  private async _findMatchingOffer(
+    offers: any[],
+    senderAssetId: string,
+    recipientSteamId64: string,
+  ): Promise<boolean> {
+    if (!offers) return false;
+    const recipientSteamId3 =
+      steamID64ToSteamID3(recipientSteamId64).toLowerCase();
+    return offers.find(
+      (offer: {
+        accountid_other: any;
+        items_to_give?: any[];
+        items_to_receive?: any[];
+        trade_offer_state: number;
+      }) => {
+        const itemsToGiveMatch = offer.items_to_give?.some(
+          (item) =>
+            item.assetid.toString() == senderAssetId &&
+            item.appid == 730 &&
+            offer.accountid_other.toString().toLowerCase() == recipientSteamId3,
+        );
+        const itemsToReceiveMatch = offer.items_to_receive?.some(
+          (item) =>
+            item.assetid.toString() == senderAssetId &&
+            item.appid == 730 &&
+            offer.accountid_other.toString().toLowerCase() == recipientSteamId3,
+        );
+
+        return (
+          (itemsToGiveMatch || itemsToReceiveMatch) &&
+          offer.trade_offer_state == 3
+        );
+      },
+    );
+  }
 }
 
 type targetItem = {
@@ -462,3 +731,19 @@ type targetItem = {
 //     this.name = 'InventoryPrivateError';
 //   }
 // }
+
+export interface isTradeMadeBody {
+  senderAddress: string;
+  senderAssetId: string;
+  recipientSteamId64: string;
+}
+
+export interface isResponseDto {
+  is: boolean;
+  error?: string;
+}
+
+function steamID64ToSteamID3(steamID64: string): string {
+  const steamID3 = BigInt(steamID64) - BigInt('76561197960265728');
+  return steamID3.toString();
+}

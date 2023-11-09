@@ -3,10 +3,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { of } from 'rxjs';
 import { TrackService } from './track.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { TrackedItem } from '../database/entities/tracked-items/tracked-items.entity';
+import { TrackedItem } from '../database/entities/primary/tracked-items/tracked-items.entity';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { FloatApiService } from '../float-api/float-api.service';
+import { TradeStatus } from '../database/database/primary/interface';
 describe('TrackService', () => {
   let service: TrackService;
   const isResetAllMocks = false;
@@ -230,7 +231,7 @@ describe('TrackService', () => {
       // Wait for the async initialization if isResetAllMocks is true 
       //await service['_loadTrackedItems']();
  
-      await service.trackItem('0x00', '76561198185748194', '76561198249128626', 'test-name-404', 0.01, 100, 10);
+      await service.trackItem(TradeStatus.SellerCommitted, '0x00', '76561198185748194', '76561198249128626', 'test-name-404', 0.01, 100, 10);
 
       expect(service['trackedItems']).toHaveLength(0);
     });
@@ -367,7 +368,7 @@ describe('TrackService', () => {
       // Wait for the async initialization if isResetAllMocks is true 
       //await service['_loadTrackedItems']();
 
-      await service.trackItem('0x00', '76561198185748194', '76561198249128626', 'test-name-1', 0.01, 100, 10);
+      await service.trackItem(TradeStatus.SellerCommitted, '0x00', '76561198185748194', '76561198249128626', 'test-name-1', 0.01, 100, 10);
         
       // Assert that the item was added to the trackedItems array
       expect(service['trackedItems']).toHaveLength(1);

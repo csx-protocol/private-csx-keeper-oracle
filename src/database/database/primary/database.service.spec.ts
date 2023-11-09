@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DatabaseService } from './database.service';
+import { PrimaryDatabaseService } from './database.service';
 import { Repository } from 'typeorm';
-import { ContractEntity } from '../entities/contract-entity/contract.entity';
-import { StatusHistoryEntity } from '../entities/status-history/status-history.entity';
+import { ContractEntity } from '../../entities/primary/contract-entity/contract.entity';
+import { StatusHistoryEntity } from '../../entities/primary/status-history/status-history.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
 describe('DatabaseService', () => {
-  let service: DatabaseService;
+  let service: PrimaryDatabaseService;
   let contractEntityRepo: jest.Mocked<Repository<ContractEntity>>;
   let statusHistoryEntityRepo: jest.Mocked<Repository<StatusHistoryEntity>>;
 
@@ -24,7 +24,7 @@ describe('DatabaseService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        DatabaseService,
+        PrimaryDatabaseService,
         {
           provide: getRepositoryToken(ContractEntity),
           useValue: mockRepository(),
@@ -36,7 +36,7 @@ describe('DatabaseService', () => {
       ],
     }).compile();
 
-    service = module.get<DatabaseService>(DatabaseService);
+    service = module.get<PrimaryDatabaseService>(PrimaryDatabaseService);
     contractEntityRepo = module.get(getRepositoryToken(ContractEntity));
     statusHistoryEntityRepo = module.get(
       getRepositoryToken(StatusHistoryEntity),

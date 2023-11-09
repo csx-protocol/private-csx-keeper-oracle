@@ -1,19 +1,17 @@
-import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { PrimaryDatabaseModule } from './database/modules/primary-database.module';
+import { SecondaryDatabaseModule } from './database/modules/secondary-database.module';
 import { AppController } from './app.controller';
-import { ContractEntity } from './database/entities/contract-entity/contract.entity';
-import { StatusHistoryEntity } from './database/entities/status-history/status-history.entity';
-import { DatabaseService } from './database/database/database.service';
 import { TrackerService } from './tracker-service/tracker.service';
 import { Web3Service } from './web3-service/web3.service';
-import { environment } from './web3-service/environment';
 import { FloatApiService } from './float-api/float-api.service';
 import { WalletService } from './web3-service/wallet.service';
 import { TrackService } from './tracker-service/track.service';
-import { TrackedItem } from './database/entities/tracked-items/tracked-items.entity';
+import { PrimaryDatabaseService } from './database/database/primary/database.service';
+import { SecondaryDatabaseService } from './database/database/secondary/secondary-database.service';
 
 @Module({
   imports: [
@@ -23,25 +21,8 @@ import { TrackedItem } from './database/entities/tracked-items/tracked-items.ent
       isGlobal: true,
       envFilePath: '.env',
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: environment.database.host,
-      port: parseInt(environment.database.port),
-      username: environment.database.username,
-      password: environment.database.password,
-      database: environment.database.database,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: false,
-      ssl: {
-        rejectUnauthorized: false,
-        ca: environment.database.caCert,
-      },
-    }),
-    TypeOrmModule.forFeature([
-      ContractEntity,
-      StatusHistoryEntity,
-      TrackedItem,
-    ]),
+    PrimaryDatabaseModule, // Now using the separated primary database module
+    SecondaryDatabaseModule, // The new module for the secondary database
   ],
   controllers: [AppController],
   providers: [
@@ -50,7 +31,8 @@ import { TrackedItem } from './database/entities/tracked-items/tracked-items.ent
     FloatApiService,
     Web3Service,
     WalletService,
-    DatabaseService,
+    PrimaryDatabaseService,
+    SecondaryDatabaseService,
   ],
 })
 export class AppModule {}

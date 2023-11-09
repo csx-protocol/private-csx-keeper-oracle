@@ -8,6 +8,7 @@ import {
 export enum ItemState {
   TRACKING_SELLER = 'TRACKING_SELLER',
   TRACKING_BUYER = 'TRACKING_BUYER',
+  TRACKING_API = 'TRACKING_API',
   COMPLETED = 'COMPLETED',
 }
 
@@ -37,6 +38,9 @@ export class TrackedItem {
 
   @Column()
   similarItemsCount: number;
+
+  @Column()
+  isWithKey: boolean;
 
   @Column({
     type: 'enum',

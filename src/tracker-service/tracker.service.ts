@@ -8,7 +8,7 @@ import { FloatApiService } from '../float-api/float-api.service';
 import { WalletService } from '../web3-service/wallet.service';
 import { environment as envWeb3 } from '../web3-service/environment';
 import { TrackService } from './track.service';
-import { DatabaseService } from '../database/database/database.service';
+import { PrimaryDatabaseService } from '../database/database/primary/database.service';
 
 @Injectable()
 export class TrackerService {
@@ -19,7 +19,7 @@ export class TrackerService {
     private readonly walletService: WalletService,
     private config: ConfigService,
     private readonly trackService: TrackService,
-    private readonly db: DatabaseService,
+    private readonly pDB: PrimaryDatabaseService,
   ) {
     this.logger.log('TrackerService dependencies injected');
   }
@@ -217,14 +217,19 @@ export class TrackerService {
 
     // const [isValid, assetId, validationResults] = await this.validateIsItemInfoAndInspectSame(event.contractAddress);
 
-    const cEntity = await this.db.findByContractAddress(event.contractAddress);
+    const cEntity = await this.pDB.findByContractAddress(event.contractAddress);
 
+    console.log('event seller?', event.seller);
+    this.logger.error(`event seller? ${event.seller}`);
+    
     this.trackService.trackItem(
+      event.seller,
       event.newStatus,
       event.contractAddress,
       sellerSteamId64,
       buyerSteamId64,
       cEntity.assetId,
+      cEntity.itemMarketName,
       cEntity.details.floatValue,
       cEntity.details.paintSeed,
       cEntity.details.paintIndex,

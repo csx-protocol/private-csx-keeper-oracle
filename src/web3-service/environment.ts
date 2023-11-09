@@ -4,12 +4,16 @@ import { config } from 'dotenv';
 config();
 
 export const environment = {
+  admin: {
+    secret: process.env.SECRET_ADMIN,
+  },
   database : {
     host: process.env.DBHOST,
     port: process.env.DBPORT,
     username: process.env.DBUSER,
     password: process.env.DBPASS,
-    database: process.env.DBNAME,
+    primaryDatabase: process.env.DBNAME,
+    secondaryDatabase: process.env.DBNAME2,
     caCert: '-----BEGIN CERTIFICATE-----\n' + 
     'MIIEQTCCAqmgAwIBAgIUd5Ca0jd3Hj2523K4zhFA9YT/4VUwDQYJKoZIhvcNAQEM\n' +
     'BQAwOjE4MDYGA1UEAwwvYWQ3OTY1MjktYzI1MS00MmY3LTkxMDktMTk2OTZkNWM5\n' +
@@ -1800,4 +1804,7 @@ export const environment = {
       }
     ],
   },
+  steamApi: {
+    endpoint: process.env.STEAMWEBAPI_KEY,
+  }
 };

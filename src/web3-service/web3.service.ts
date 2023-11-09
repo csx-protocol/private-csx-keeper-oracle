@@ -2,18 +2,19 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { environment } from './environment';
 
-import { DatabaseService } from '../database/database/database.service';
-import { ContractEntity } from '../database/entities/contract-entity/contract.entity';
-import { TradeStatus } from '../database/database/interface';
+import { PrimaryDatabaseService } from '../database/database/primary/database.service';
+import { ContractEntity } from '../database/entities/primary/contract-entity/contract.entity';
+import { TradeStatus } from '../database/database/primary/interface';
 import { TrackerService } from '../tracker-service/tracker.service';
 import { WalletService } from './wallet.service';
 
 @Injectable()
 export class Web3Service implements OnModuleInit {
+  private logSubscription: any;
   private readonly logger = new Logger(Web3Service.name);
   private onInitCurrentBlockHeight: number;
   constructor(
-    private db: DatabaseService,
+    private db: PrimaryDatabaseService,
     private tracker: TrackerService,
     private walletService: WalletService,
   ) {
@@ -90,7 +91,7 @@ export class Web3Service implements OnModuleInit {
       fromBlock: hexBlockHeight,
     };
 
-    this.walletService.wallet.alchemy.ws.on(filter, async (log, event)=>{
+    this.logSubscription = this.walletService.wallet.alchemy.ws.on(filter, async (log, event)=>{
       const txHash = log.transactionHash;      
       const reciept = await this.walletService.wallet.alchemy.transact.waitForTransaction(txHash, 0);
 
@@ -108,6 +109,14 @@ export class Web3Service implements OnModuleInit {
           break;
       }
     });
+  }
+
+  public stopListeningToLogs() {
+    if (this.logSubscription) {
+      // Stop listening to the logs
+      this.walletService.wallet.alchemy.ws.off(this.logSubscription);
+      this.logSubscription = null; // Clear the subscription
+    }
   }
 
   private async _processStatusChangeTopic(log: any, _blockHeight: number) {
@@ -363,7 +372,7 @@ export class Web3Service implements OnModuleInit {
 
   /** Utils **/
 
-  private async getLastKnownBlockHeight(): Promise<number> {
+  async getLastKnownBlockHeight(): Promise<number> {
     const lastKnownBlockHeight = await this.db.fetchLastKnownBlock();
     return lastKnownBlockHeight;
   }

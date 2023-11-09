@@ -75,12 +75,34 @@ Nest is [MIT licensed](LICENSE).
 ## Env
 
 ```
-WALLETKEY=''  # Your wallet key
-APIKEY='' # Your Alchemy API key
-STEAMAPIS_KEY='' # Your SteamAPIs API key
-DBHOST='' # Your database host
-DBNAME='' # Your database name
-DBPORT='' # Your database port
-DBUSER='' # Your database user
-DBPASS='' # Your database password
+# WALLETKEY='' # Your wallet key
+# APIKEY='' # Your Alchemy API key
+# PROVIDER='' # Your provider wss://
+# STEAMAPIS_KEY='' # Your SteamAPIs API key
+# STEAMWEB_KEY='' # Your SteamAPIs API key
+# SECRET_ADMIN='' # Your admin secret
+# DBHOST='' # Your database host
+# DBNAME='' # Your database name
+# DBPORT='' # Your database port
+# DBUSER='' # Your database user
+# DBPASS='' # Your database password
+# DBHOST=''
+# DBNAME=''
+# DBPORT=''
+# DBUSER=''
+# DBPASS=''
+# CACERT=''
 ```
+
+# /**
+#  * Arbitrum
+#  *  Mainnet: https://arbitrum-mainnet.infura.io/v3/c0116fbce4ee480aa0a56babc2adb5e3
+#  *  Goerli: 
+#  *    https://arbitrum-goerli.infura.io/v3/c0116fbce4ee480aa0a56babc2adb5e3
+#  *    wss://arbitrum-goerli.s.chainbase.online/v1/2KawzBV7LoxR7WQU6Swx9jh0gaM
+#  *    wss://arb-goerli.g.alchemy.com/v2/uFVF_4dc2pPcYoeJbry39cKCnWVLVIIX
+#  * 
+#  *  Ganache: ws://127.0.0.1:7545
+#  * 
+#  */
+

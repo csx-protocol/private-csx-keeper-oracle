@@ -1,17 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOneOptions, Repository } from 'typeorm';
-import { ContractEntity } from '../entities/contract-entity/contract.entity';
-import { StatusHistoryEntity } from '../entities/status-history/status-history.entity';
+import { ContractEntity } from '../../entities/primary/contract-entity/contract.entity';
+import { StatusHistoryEntity } from '../../entities/primary/status-history/status-history.entity';
 import { TradeStatus } from './interface';
 
 @Injectable()
-export class DatabaseService {
-  private readonly logger = new Logger(DatabaseService.name);
+export class PrimaryDatabaseService {
+  private readonly logger = new Logger(PrimaryDatabaseService.name);
   constructor(
-    @InjectRepository(ContractEntity)
+    @InjectRepository(ContractEntity, 'primaryConnection')
     private readonly blockDataRepository: Repository<ContractEntity>,
-    @InjectRepository(StatusHistoryEntity)
+    @InjectRepository(StatusHistoryEntity, 'primaryConnection')
     private readonly statusHistoryRepository: Repository<StatusHistoryEntity>,
   ) {}
 
