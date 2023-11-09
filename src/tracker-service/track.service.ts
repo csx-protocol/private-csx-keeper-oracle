@@ -191,6 +191,8 @@ export class TrackService {
     _paintIndex: number,
   ) {
     const apiUser = await this.sDB.getUser(sellerAddress);
+    this.logger.log('apiUser', apiUser);
+    console.log('apiUser', apiUser);    
     if (!apiUser.error && apiUser.data.apiKey) {
 
       const isApiKeyValid = await this.sDB.isApiKeyValid(apiUser.data.apiKey);
