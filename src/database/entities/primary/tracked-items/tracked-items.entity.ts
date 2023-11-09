@@ -39,9 +39,6 @@ export class TrackedItem {
   @Column()
   similarItemsCount: number;
 
-  @Column()
-  isWithKey: boolean;
-
   @Column({
     type: 'enum',
     enum: ItemState,
