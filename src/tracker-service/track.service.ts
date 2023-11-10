@@ -124,8 +124,8 @@ export class TrackService {
         contractAddress,
       );
 
-      console.log('currentStatus', currentStatus);
-      console.log('status', status);
+      //console.log('currentStatus', currentStatus);
+      //console.log('status', status);
 
       if (status != currentStatus) {
         this.logger.error(
@@ -368,9 +368,6 @@ export class TrackService {
     veridict: boolean,
     message: string,
   ) {
-    console.log('veridict', veridict);
-    console.log('message', message);
-    console.log('trackedItem', trackedItem); 
     try {
       this.walletService
         .confirmTrade(trackedItem.contractAddress, veridict, message)
