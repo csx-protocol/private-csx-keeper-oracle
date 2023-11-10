@@ -1184,6 +1184,19 @@ export const environment = {
       {
         "inputs": [
           {
+            "internalType": "uint256",
+            "name": "_newPrice",
+            "type": "uint256"
+          }
+        ],
+        "name": "changePrice",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "components": [
               {
                 "internalType": "uint256",
