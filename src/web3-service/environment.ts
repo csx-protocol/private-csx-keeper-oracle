@@ -45,7 +45,7 @@ export const environment = {
     apiKey: process.env.APIKEY,
   },
   contractFactory: {
-    address: '0x3B7a0Fc387cBe819f0034619F49A3D93654abA70',
+    address: '0x330cdF7dc551a15d19e41D7B546A9FFdbC5b1f55',
     abi: [
       {
         "inputs": [
