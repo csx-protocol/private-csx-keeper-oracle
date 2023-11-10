@@ -15,6 +15,7 @@ import { FloatApiService } from '../float-api/float-api.service';
 import { WalletService } from '../web3-service/wallet.service';
 import { TradeStatus } from '../database/database/primary/interface';
 import { SecondaryDatabaseService } from '../database/database/secondary/secondary-database.service';
+import { ethers } from 'ethers';
 
 @Injectable()
 export class TrackService {
@@ -381,6 +382,8 @@ export class TrackService {
             error,
           );
           this.logger.error(error);
+          console.log('Revert reason:', error.reason);
+          console.log('Transaction:', error.transaction);
         });
     } catch (error) {
       this.logger.error(`Error confirming trade: ${trackedItem.id}`, error);
