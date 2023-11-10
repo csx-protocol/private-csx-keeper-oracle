@@ -16,6 +16,7 @@ import { WalletService } from '../web3-service/wallet.service';
 import { TradeStatus } from '../database/database/primary/interface';
 import { SecondaryDatabaseService } from '../database/database/secondary/secondary-database.service';
 import { ethers } from 'ethers';
+import { environment } from 'src/web3-service/environment';
 
 @Injectable()
 export class TrackService {
@@ -387,6 +388,10 @@ export class TrackService {
           this.logger.error(error);
           console.log('Revert reason:', error.reason);
           console.log('Transaction:', error.transaction);
+          const abi = environment.tradeContract.abi;
+          const contractInterface = new ethers.Interface(abi);
+          const decodedError = contractInterface.parseTransaction({data: error.transaction.data});
+          console.log('Decoded error:', decodedError);          
         });
     } catch (error) {
       this.logger.error(`Error confirming trade: ${trackedItem.id}`, error);
