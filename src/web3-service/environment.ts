@@ -45,7 +45,7 @@ export const environment = {
     apiKey: process.env.APIKEY,
   },
   contractFactory: {
-    address: '0x330cdF7dc551a15d19e41D7B546A9FFdbC5b1f55',
+    address: '0x96dEDeb08ec6b3A03f7025fe7a5adA1195a7afF4',
     abi: [
       {
         "inputs": [
@@ -1125,6 +1125,58 @@ export const environment = {
       },
       {
         "inputs": [],
+        "name": "IKEEPERS_CONTRACT",
+        "outputs": [
+          {
+            "internalType": "contract IKeepers",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "ITRADEFACTORY_CONTRACT",
+        "outputs": [
+          {
+            "internalType": "contract ITradeFactory",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "IUSERS_CONTRACT",
+        "outputs": [
+          {
+            "internalType": "contract IUsers",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "SELLER_ADDRESS",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
         "name": "buyer",
         "outputs": [
           {
@@ -1261,19 +1313,6 @@ export const environment = {
         "outputs": [
           {
             "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "factoryContract",
-        "outputs": [
-          {
-            "internalType": "contract ITradeFactory",
             "name": "",
             "type": "address"
           }
@@ -1485,19 +1524,6 @@ export const environment = {
         "type": "function"
       },
       {
-        "inputs": [],
-        "name": "keepersContract",
-        "outputs": [
-          {
-            "internalType": "contract IKeepers",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
         "inputs": [
           {
             "internalType": "string",
@@ -1596,19 +1622,6 @@ export const environment = {
         "outputs": [
           {
             "internalType": "contract IStakedCSX",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "seller",
-        "outputs": [
-          {
-            "internalType": "address",
             "name": "",
             "type": "address"
           }
@@ -1771,19 +1784,6 @@ export const environment = {
             "internalType": "string",
             "name": "imageLink",
             "type": "string"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "usersContract",
-        "outputs": [
-          {
-            "internalType": "contract IUsers",
-            "name": "",
-            "type": "address"
           }
         ],
         "stateMutability": "view",
